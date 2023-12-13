@@ -48,7 +48,7 @@ function solitons(
     # == GPE 1D =======================================================
     time_requirement[1] = @elapsed begin
       if haskey(gs_dict, hs("G1", gamma_param))
-        if use_precomputed 
+        if use_precomputed && false
           @info "\t G1:    |  x  "
         else
           @info "\t G1: x  |      (deleting)"
@@ -157,7 +157,7 @@ function solitons(
         sim_npse_plus.psi_0 = npse
       end
       if haskey(gs_dict, hs("Np", gamma_param))
-        if use_precomputed
+        if use_precomputed && false
           @info "\t Np:    |  x  "
         else
           @info "\t Np:  x |     (deleting)"
@@ -221,10 +221,6 @@ function solitons(
         sim_gpe_3d.psi_0 .= sim_gpe_3d.psi_0 / sqrt(sum(abs2.(sim_gpe_3d.psi_0) * sim_gpe_3d.dV)) #this may be responsible for the strange behaviour
         initial_3d = copy(sim_gpe_3d.psi_0)
         kspace!(sim_gpe_3d.psi_0, sim_gpe_3d)
-        # pp = plot(x, axial_imprint(x), label="dovrebbe")
-        # plot!(pp, x, sum(abs2.(xspace(sim_gpe_3d.psi_0, sim_gpe_3d)), dims=(2, 3))[:, 1, 1] * (real(y[2]-y[1])^2), label="è")
-        # display(pp)
-        # @warn sum(abs2.(axial_imprint.(x))) * (x[2]-x[1]) # FIXME (i'm off by 3/1000)
       end
 
       if haskey(gs_dict, hs("G3", gamma_param))

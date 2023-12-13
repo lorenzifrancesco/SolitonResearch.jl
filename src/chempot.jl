@@ -3,7 +3,7 @@ function compare_chempot(; use_precomputed=true, take_advantage=true)
   @info "Loading parameters..."
   sd = load_parameters_alt(eqs=["G1", "N", "Np","G3"])
   # FIXME
-  FFTW.set_num_threads(1)
+  # FFTW.set_num_threads(1)
   gamma_range = LinRange(0.0, 1.0, 40)
   p = plot(xlabel=L"\gamma", ylabel=L"\mu")
 

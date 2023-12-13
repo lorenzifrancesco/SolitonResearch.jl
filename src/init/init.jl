@@ -1,4 +1,5 @@
 function load_parameters_gs(; gamma_param::Float64=0.6, eqs=["G1", "N", "Np", "G3"])
+    throw("Broken: not sorted")  
     sim_dictionary = Dict()
 
     maxiters_1d = 1e10
@@ -114,6 +115,7 @@ function load_parameters_gs(; gamma_param::Float64=0.6, eqs=["G1", "N", "Np", "G
 end
 
 function load_parameters(; vv::Float64 = 0.0, bb::Float64 = 0.0, gamma_param::Float64=0.6, Nsaves::Int64=200, eqs=["G1", "N", "Np", "G3"])
+    throw("Broken: not sorted")
     sim_dictionary = Dict()
 
     maxiters_1d = 1e10
@@ -271,6 +273,7 @@ function load_parameters_collapse(
     eqs=["G1", "N", "Np", "G3"],
     initial_width::Float64=5.0,
     )
+    throw("Broken: not sorted")
     sim_dictionary = Dict()
 
     maxiters_1d = 1e10
@@ -424,8 +427,7 @@ function load_parameters_alt(
     Lt = 10.0,
     )
 
-    sim_dictionary = Dict()
-
+    sim_dictionary::OrderedDict{String, Sim} = OrderedDict()
     maxiters_1d = 1e10
     maxiters_3d = 1e10
     dt_all = 0.01 # important for the prepare_for_collision function, then overwritten in imprint_vel_set_bar
@@ -580,5 +582,6 @@ function load_parameters_alt(
     if "G3" in eqs
         push!(sim_dictionary, "G3" => sim_gpe_3d)
     end
+    sort(sim_dictionary)
     return sim_dictionary
 end

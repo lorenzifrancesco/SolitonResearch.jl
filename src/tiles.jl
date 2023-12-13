@@ -1,13 +1,16 @@
 JULIA_CUDA_SOFT_MEMORY_LIMIT = "95%"
 
-function tiles(; 
+function tiles(;
+  extremes=false,
+  use_precomputed_gs=true,
   use_precomputed_tiles=false,
   return_maximum=false,
-  tile_number=2)
+  number_of_tiles=2)
+
+  FFTW.set_num_threads(20)
   
-  # # FIXME
-  # FFTW.set_num_threads(1)
-  # pyplot()
+  equation_selection = ["G1", "N"]
+  
   if Threads.nthreads() == 1
     @warn "running in single thread mode!"
   else
@@ -19,17 +22,16 @@ function tiles(;
 
   for gamma in gamma_list
     @info "==== Using gamma: " gamma
-    equation_selection = ["N"]
     @info "_____________________________"
     @info "\tpreparing"
     sd = load_parameters_alt(gamma_param=gamma; nosaves=true)
     sd = filter(p -> (first(p) in equation_selection), sd)
     @info "\tRequired simulations: " keys(sd)
     @info "\tsetting ground state"
-    @time prepare_for_collision!(sd, gamma; use_precomputed_gs=true)
+    @time prepare_for_collision!(sd, gamma; use_precomputed_gs=use_precomputed_gs)
 
     # check the extremes for stability
-    if false
+    if extremes
       @info "Computing the extremes..."
       check_eq = "G3"
       four_extremes = get_tiles(sd[check_eq], check_eq;
@@ -50,19 +52,23 @@ function tiles(;
       JLD2.save(save_path * "tile_dict.jld2", tile_dict)
     end
 
-    @info "_____________________________"
     for (name, sim) in sd
-      @info "\tTiling " name
+      print("\n")
+      @info "==============================================="
+      @info "\t\tTiling "*string(name)
+      @info "==============================================="
+      print("\n")
       if haskey(tile_dict, hs(name, gamma)) && use_precomputed_tiles
         @info "Already found tile for " name, gamma
       else
-        tile = get_tiles(sim, name; tiles=tile_number)
+        tile = get_tiles(sim, name; tiles=number_of_tiles)
         @info "==== Saving tiles"
         push!(tile_dict, hs(name, gamma) => tile)
         JLD2.save(save_path * "tile_dict.jld2", tile_dict)
       end
     end
   end
+  view_all_tiles()
 end
 
 function get_tiles(
@@ -101,13 +107,14 @@ function get_tiles(
   full_time = @elapsed for ((vx, vv), (bx, bb)) in ProgressBar(iter)
     sim = sgrid[bx, vx]
     collapse_occured = false
-    @info "Computing tile" (vv, bb)
+    print("\n\tComputing tile", (vv, bb))
     sol = nothing
     try
       avg_iteration_time += @elapsed sol = runsim(sim; info=false)
-      # avoid NPSE+ memory filling problem
-      @info "GC..."
-      GC.gc()
+
+      # FIXME avoid NPSE+ memory filling problem
+      # @info "GC..."
+      # GC.gc()
       if plot_finals
         pp = plot_final_density(sol.u, sim; show=false)
         savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
@@ -126,27 +133,27 @@ function get_tiles(
     # catch maxiters hit and set the transmission to zero
     if sim.manual == false
       if sol.retcode != ReturnCode.Success
-        @info "Run complete, computing transmission..."
+        # @info "Run complete, computing transmission..."
         @info "Detected solver failure"
         tran[bx, vx] = 0.0
         refl[bx, vx] = 1.0
-        @info "T = " tran[bx, vx]
+        print("\t T = ", tran[bx, vx])
       else
         # CHANGE : saving the maximum value occured in the iterations
         final = sol.u[end]
-        @info "Run complete, computing transmission..."
-        # xspace!(final, sim)
-        # tran[bx, vx] = ns(final, sim, mask_tran)
-        # refl[bx, vx] = ns(final, sim, mask_refl)
+        # @info "Run complete, computing transmission..."
+        xspace!(final, sim)
+        tran[bx, vx] = ns(final, sim, mask_tran)
+        refl[bx, vx] = ns(final, sim, mask_refl)
         @info "T = " tran[bx, vx]
       end
     else
       if !collapse_occured
         final = sol.u[end]
-        @info "Run complete, computing transmission..."
-        # xspace!(final, sim)
-        # tran[bx, vx] = ns(final, sim, mask_tran)
-        # refl[bx, vx] = ns(final, sim, mask_refl)
+        # @info "Run complete, computing transmission..."
+        xspace!(final, sim)
+        tran[bx, vx] = ns(final, sim, mask_tran)
+        refl[bx, vx] = ns(final, sim, mask_refl)
       else
         @info "Run complete, detected collapse..."
         tran[bx, vx] = NaN
@@ -157,10 +164,12 @@ function get_tiles(
       @warn "T+R != 1.0"
     end
   end
-  @info "Tiling time            = " full_time
-  @info "Total time in solver   = " avg_iteration_time
-  @info "Average iteration time = " avg_iteration_time / tiles^2
-
+  print("\n")
+  @info "_________________________________________________"
+  @info "Pavement time    = "*string(full_time)
+  @info "Single tile time = "*string(avg_iteration_time / tiles^2)
+  @info "_________________________________________________"
+  print("\n")
   JLD2.@save("tran_$(name).jld2", tran)
   JLD2.@save("refl_$(name).jld2", refl)
   norm_bar = bar_list / max_bar
@@ -274,7 +283,7 @@ function view_all_tiles()
   # pyplot(size=(300, 260))
   tile_file = "results/tile_dict.jld2"
   @assert isfile(tile_file)
-  td = load(tile_file)
+  td = JLD2.load(tile_file)
   delete!(td, hs("CQ", 0.65))
   ht_list = []
   ct_list = []
