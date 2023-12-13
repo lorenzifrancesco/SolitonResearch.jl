@@ -148,7 +148,7 @@ function get_tiles(
         xspace!(final, sim)
         tran[bx, vx] = ns(final, sim, mask_tran)
         refl[bx, vx] = ns(final, sim, mask_refl)
-        @info "T = " tran[bx, vx]
+        print("\t T = ", tran[bx, vx])
       end
     else
       if !collapse_occured
@@ -161,10 +161,10 @@ function get_tiles(
         @info "Run complete, detected collapse..."
         tran[bx, vx] = NaN
       end
-      @info "T = " tran[bx, vx]
+      print("\t T = ", tran[bx, vx])
     end
     if !isapprox(tran[bx, vx] + refl[bx, vx], 1.0, atol=1e-5)
-      @warn "T+R != 1.0"
+      print("WARN: [T+R != 1.0]")
       warn[bx, vx] = 1.0
     end
   end
