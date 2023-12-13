@@ -1,27 +1,21 @@
 module SolitonResearch 
 
 using ExportAll
+using PrecompileTools
 
-using SolitonDynamics
-using PyPlot
-using Revise
+using SolitonDynamics, CUDA, FFTW, OrdinaryDiffEq
+# using Plots
 using HDF5
 import JLD2
-using FFTW, CUDA, OrdinaryDiffEq
 using Interpolations
 using OrderedCollections
-using LoopVectorization, LinearAlgebra
 
-# ENV["PYTHON"]="usr/bin/python"
-# using PyPlot
 using LaTeXStrings
-using Plots
 import Makie, GLMakie
-using ProgressBars, Colors
+using ProgressBars, Colors, ColorSchemes
 
-pyplot()
-using PyCall
-const plt = pyimport("matplotlib.pyplot")
+# using PyCall
+# const plt = pyimport("matplotlib.pyplot")
 
 # includet("/home/lorenzi/SolitonDynamics.jl/src/CondensateDynamics.jl")
 # using Main.CondensateDynamics
@@ -32,27 +26,31 @@ const plt = pyimport("matplotlib.pyplot")
 # plt.rcParams["lines.linewidth"] = 2
 # Set other parameters as needed
 
-includet("init/_plot_settings.jl")
-# pyplot(size=(350, 220))
-# if ENV["USER"] == "ubuntu"
-#   plotly()
-# else
-#   pyplot()
-# end
+pyplot(size=(350, 220))
 
-includet("plotting/plot_axial_evolution.jl")
-includet("plotting/plot_isosurfaces.jl")
-includet("utils/visual_utils.jl")
-includet("init/init.jl")
-includet("utils/sim_utils.jl")
+include("init/_plot_settings.jl")
+include("plotting/plot_axial_evolution.jl")
+include("plotting/plot_isosurfaces.jl")
+include("utils/visual_utils.jl")
+include("init/init.jl")
+include("utils/sim_utils.jl")
+include("solitons.jl")
+include("lines.jl")
+include("tiles.jl")
+include("chempot.jl")
+include("auxiliary_scripts/aux_collapse.jl")
+include("auxiliary_scripts/aux_gs.jl")
+include("auxiliary_scripts/aux_collision.jl")
+include("auxiliary_scripts/aux_sigma2.jl")
 
-includet("solitons.jl")
-includet("lines.jl")
-includet("tiles.jl")
-includet("chempot.jl")
-includet("auxiliary_scripts/aux_collapse.jl")
-includet("auxiliary_scripts/aux_gs.jl")
-includet("auxiliary_scripts/aux_collision.jl")
-includet("auxiliary_scripts/aux_sigma2.jl")
-@exportAll
+@exportAll()
+
+@setup_workload begin
+  @compile_workload begin
+    @info "entering compile workload"
+    sd = load_parameters_alt()
+    prepare_for_collision!(sd, 0.65)
+  end
+end
+
 end

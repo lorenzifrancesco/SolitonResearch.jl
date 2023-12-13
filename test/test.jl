@@ -1,4 +1,5 @@
-using Plots 
+using Plots
+
 function foo()
   pyplot()
   x = LinRange(0, 1, 100)
@@ -7,3 +8,5 @@ function foo()
   savefig(p, "media/test.pdf")
   display(p)
 end
+
+@test true

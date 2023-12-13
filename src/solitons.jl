@@ -64,7 +64,7 @@ function solitons(
       end
     end
     gpe_1d = gs_dict[hs("G1", gamma_param)]
-    plot_final_density!(p, [gpe_1d], sim_gpe_1d; label="1D-GPE", color=:grey, ls=:solid)
+    plot_final_density!(p, [gpe_1d], sim_gpe_1d; label="1D-GPE", color=:grey, ls=:dashdot)
     JLD2.save(join([save_path, "gs_dict.jld2"]), gs_dict)
 
     # # == CQGPE =======================================================
@@ -157,7 +157,7 @@ function solitons(
         sim_npse_plus.psi_0 = npse
       end
       if haskey(gs_dict, hs("Np", gamma_param))
-        if use_precomputed && false
+        if use_precomputed
           @info "\t Np:    |  x  "
         else
           @info "\t Np:  x |     (deleting)"
