@@ -46,13 +46,10 @@ includet("utils/visual_utils.jl")
 includet("init/init.jl")
 includet("utils/sim_utils.jl")
 
-includet("scripts/solitons.jl")
-
-includet("scripts/lines.jl")
-
-
-includet("scripts/tiles.jl")
-includet("scripts/chempot.jl")
+includet("solitons.jl")
+includet("lines.jl")
+includet("tiles.jl")
+includet("chempot.jl")
 includet("auxiliary_scripts/aux_collapse.jl")
 includet("auxiliary_scripts/aux_gs.jl")
 includet("auxiliary_scripts/aux_collision.jl")

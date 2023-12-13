@@ -2,3 +2,8 @@ name = "SolitonResearch"
 uuid = "208d8f8d-dc1f-45fb-ad1b-97a17c69a7bf"
 authors = ["lorenzifrancesco <francesco.lorenzi.2@studenti.unipd.it>"]
 version = "0.1.0"
+
+[deps]
+ExportAll = "ad2082ca-a69e-11e9-38fa-e96309a31fe4"
+SolitonDynamics = "a462cd4a-e029-4138-aed7-681342f91064"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
