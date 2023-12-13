@@ -7,7 +7,7 @@ function tiles(;
   
   # # FIXME
   # FFTW.set_num_threads(1)
-  pyplot()
+  # pyplot()
   if Threads.nthreads() == 1
     @warn "running in single thread mode!"
   else
@@ -271,7 +271,7 @@ end
 
 function view_all_tiles()
   # pyplot(size=(300, 220))
-  pyplot(size=(300, 260))
+  # pyplot(size=(300, 260))
   tile_file = "results/tile_dict.jld2"
   @assert isfile(tile_file)
   td = load(tile_file)

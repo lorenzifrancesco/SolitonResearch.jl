@@ -6,7 +6,7 @@ function solitons(
   show_plots::Bool=false,
   info::Bool=false
 )
-  pyplot(size=(359, 220))
+  # pyplot(size=(359, 220))
   sd = load_parameters_alt()
 
   @assert all([s.iswitch for s in values(sd)] .== -im)

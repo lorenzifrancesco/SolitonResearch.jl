@@ -1,5 +1,5 @@
 function compare_chempot(; use_precomputed=true, take_advantage=true)
-  pyplot(size=(350, 220))
+  # pyplot(size=(350, 220))
   @info "Loading parameters..."
   sd = load_parameters_alt(eqs=["G1", "N", "Np","G3"])
   # FIXME

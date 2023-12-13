@@ -2,7 +2,7 @@ using ColorSchemes
 
 # use the 512 version (long run)
 function gs_sigma2(gamma_list=[0.65])
-  pyplot(size=(350, 220))
+  # pyplot(size=(350, 220))
   for gamma in gamma_list
     sd = load_parameters_alt(gamma_param=gamma)
     delete!(sd, "CQ")

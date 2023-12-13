@@ -1,7 +1,7 @@
 using Plots
 
 function foo()
-  pyplot()
+  # pyplot()
   x = LinRange(0, 1, 100)
   y = exp.(-x.^2)
   p = plot(x, y)

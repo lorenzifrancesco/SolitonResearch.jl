@@ -295,7 +295,7 @@ function view_all_lines(; sweep="bar")
 end
 
 function plot_all_lines(number_of_lines=4, sweep="bar")
-  pyplot(size=(350, 220))
+  # pyplot(size=(350, 220))
   for i in 1:number_of_lines
     compare_all_lines(slice_choice=i, sweep=sweep)
   end
