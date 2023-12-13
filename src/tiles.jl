@@ -7,7 +7,7 @@ function tiles(;
   return_maximum=false,
   number_of_tiles=2)
 
-  FFTW.set_num_threads(20)
+  # FFTW.set_num_threads(20)
   
   equation_selection = ["G1", "N"]
   
@@ -21,7 +21,7 @@ function tiles(;
   gamma_list = [0.65]
 
   for gamma in gamma_list
-    @info "==== Using gamma: " gamma
+    print("\n---> Using gamma: ", gamma)
     @info "_____________________________"
     @info "\tpreparing"
     sd = load_parameters_alt(gamma_param=gamma; nosaves=true)
@@ -85,6 +85,7 @@ function get_tiles(
   bar_list = LinRange(0, max_bar, tiles)
   tran = Array{Float64,2}(undef, (tiles, tiles))
   refl = Array{Float64,2}(undef, (tiles, tiles))
+  warning = zeros((tiles, tiles))
 
   @info "Filling sim grid..."
   sgrid = Array{Sim,2}(undef, (tiles, tiles))
@@ -104,7 +105,11 @@ function get_tiles(
   @info "Running tiling..."
   avg_iteration_time = 0.0
   iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
-  full_time = @elapsed for ((vx, vv), (bx, bb)) in ProgressBar(iter)
+
+  full_time = @elapsed begin
+  Threads.@threads for vx in 1:length(vel_list)
+    vv = vel_list[vx]
+    for (bx, bb) in enumerate(bar_list)
     sim = sgrid[bx, vx]
     collapse_occured = false
     print("\n\tComputing tile", (vv, bb))
@@ -128,8 +133,6 @@ function get_tiles(
         throw(err)
       end
     end
-
-
     # catch maxiters hit and set the transmission to zero
     if sim.manual == false
       if sol.retcode != ReturnCode.Success
@@ -162,7 +165,10 @@ function get_tiles(
     end
     if !isapprox(tran[bx, vx] + refl[bx, vx], 1.0, atol=1e-5)
       @warn "T+R != 1.0"
+      warn[bx, vx] = 1.0
     end
+  end
+end
   end
   print("\n")
   @info "_________________________________________________"
@@ -172,6 +178,7 @@ function get_tiles(
   print("\n")
   JLD2.@save("tran_$(name).jld2", tran)
   JLD2.@save("refl_$(name).jld2", refl)
+  JLD2.@save("warn_$(name).jld2", warning)
   norm_bar = bar_list / max_bar
   norm_vel = vel_list / max_vel
   return tran
