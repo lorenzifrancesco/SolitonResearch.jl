@@ -6,15 +6,13 @@ function tiles(;
   use_precomputed_tiles=false,
   return_maximum=false,
   number_of_tiles=2, 
-  equation_selection = ["N"])
+  equation_selection = ["Np"])
 
   # FFTW.set_num_threads(20)
   startup_equation = ["G1"]
   
   if Threads.nthreads() == 1
     @warn "running in single thread mode!"
-  else
-    @info "running in multi-thread mode: n_threads =" Threads.nthreads()
   end
 
   save_path = "results/"
