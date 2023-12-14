@@ -4,6 +4,7 @@ using ExportAll
 using PrecompileTools
 
 using SolitonDynamics, CUDA, FFTW, OrdinaryDiffEq
+using Distributed
 using Plots
 using HDF5
 import JLD2
@@ -26,6 +27,7 @@ include("solitons.jl")
 include("lines.jl")
 include("tiles.jl")
 include("chempot.jl")
+include("efficiency.jl")
 include("auxiliary_scripts/aux_collapse.jl")
 include("auxiliary_scripts/aux_gs.jl")
 include("auxiliary_scripts/aux_collision.jl")

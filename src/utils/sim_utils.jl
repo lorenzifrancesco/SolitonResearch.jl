@@ -129,6 +129,7 @@ function prepare_for_collision!(
     use_precomputed_gs=false, 
     info=false
     )
+    print("\n_________________________________________\n")
     save_path = "results/"
     if isfile(save_path * "gs_dict.jld2")
         @info "[Loading GS library...]"
@@ -152,35 +153,34 @@ function prepare_for_collision!(
         # write the initial state into sim
         @info " ---> Writing ground state into sim..."
         if length(sim.N) == 1
-            @unpack_Sim sim
-            x0 = L[1] / 4
-            shift = Int(x0 / L[1] * N[1])
-            iswitch = 1
-            x = X[1]
-            psi_0 = uu
-            xspace!(psi_0, sim)
-            psi_0 .= circshift(psi_0, shift)
-            kspace!(psi_0, sim)
-            @assert isapprox(nsk(psi_0, sim), 1.0, atol=1e-9)
-            time_steps  = Int(ceil((tf-ti)/dt))
-            @pack_Sim! sim
+            x0 = sim.L[1] / 4
+            shift = Int(x0 / sim.L[1] * sim.N[1])
+            sim.iswitch = 1
+            x = sim.X[1]
+            sim.psi_0 = uu
+            @assert length(uu) == sim.N[1]
+            xspace!(sim.psi_0, sim) ## FIXME BEWARE OF THE SIZE
+            sim.psi_0 .= circshift(sim.psi_0, shift)
+            kspace!(sim.psi_0, sim)
+            @assert isapprox(nsk(sim.psi_0, sim), 1.0, atol=1e-9)
+            sim.time_steps  = Int(ceil((sim.tf-sim.ti)/sim.dt))
         else
-            @unpack_Sim sim
-            x0 = L[1] / 4
-            shift = Int(x0 / L[1] * N[1])
-            iswitch = 1
-            x = X[1] |> real
-            y = X[2] |> real
-            z = X[3] |> real
-            psi_0 = CuArray(uu)
-            xspace!(psi_0, sim)
-            psi_0 = circshift(CuArray(psi_0), (shift, 0, 0))
-            kspace!(psi_0, sim)
-            @assert isapprox(nsk(psi_0, sim), 1.0, atol=1e-9)
-            time_steps  = Int(ceil((tf-ti)/dt))
+            x0 = sim.L[1] / 4
+            shift = Int(x0 / sim.L[1] * sim.N[1])
+            sim.iswitch = 1
+            x = sim.X[1] |> real
+            y = sim.X[2] |> real
+            z = sim.X[3] |> real
+            sim.psi_0 = CuArray(uu)
+            xspace!(sim.psi_0, sim)
+            sim.psi_0 = circshift(CuArray(sim.psi_0), (shift, 0, 0))
+            kspace!(sim.psi_0, sim)
+            @assert isapprox(nsk(sim.psi_0, sim), 1.0, atol=1e-9)
+            time_steps  = Int(ceil((sim.tf-sim.ti)/sim.dt))
             @pack_Sim! sim
         end
     end
+    print("_________________________________________\n")
     return sd
 end
 
@@ -192,26 +192,25 @@ function imprint_vel_set_bar(
     dt::Float64=0.01,
     time_step_limit::Int64=5000)
     simc = deepcopy(sim)
-    @unpack_Sim simc
-    x = X[1] |> real
-    @. V0 = bb * exp(-(x/bw)^2 /2) # central barrier
-    x0 = L[1]/4
+    x = simc.X[1] |> real
+    @. simc.V0 = bb * exp(-(x/bw)^2 /2) # central barrier
+    x0 = simc.L[1]/4
     if vv == 0.0
-        tf = 2.0
+        simc.tf = 2.0
     else
-        tf = 2*x0/vv
+        simc.tf = 2*x0/vv
     end
-    t = LinRange(ti, tf, Nt)
-    time_steps = Int(floor((tf-ti)/dt))
+    simc.t = LinRange(simc.ti, simc.tf, simc.Nt)
+    simc.time_steps = Int(floor((simc.tf-simc.ti)/dt))
+    simc.dt = dt
     if time_steps > time_step_limit
         @warn "time_steps > $time_step_limit, clipping dt"
-        time_steps = time_step_limit
-        dt = (tf-ti)/time_steps
+        simc.time_steps = time_step_limit
+        simc.dt = (tf-ti)/time_steps
     end
-    xspace!(psi_0, simc)
-    @. psi_0 = abs(psi_0) * exp(-im*(x)*vv)
-    kspace!(psi_0, simc)
-    @pack_Sim! simc
+    xspace!(simc.psi_0, simc)
+    @. simc.psi_0 = abs(simc.psi_0) * exp(-im*(x)*vv)
+    kspace!(simc.psi_0, simc)
     return simc
 end
 

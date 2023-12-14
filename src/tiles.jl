@@ -1,15 +1,15 @@
 # JULIA_CUDA_SOFT_MEMORY_LIMIT = "95%"
 
 function tiles(;
-  extremes=false,
+  extremes=true,
   use_precomputed_gs=true,
   use_precomputed_tiles=false,
   return_maximum=false,
   number_of_tiles=2, 
-  equation_selection = ["Np"])
+  equation_selection = ["G1", "Np"])
 
   # FFTW.set_num_threads(20)
-  startup_equation = ["G1"]
+  startup_equation = "G1"
   
   if Threads.nthreads() == 1
     @warn "running in single thread mode!"
@@ -27,13 +27,12 @@ function tiles(;
     @info "\tRequired simulations: " keys(sd)
     @info "\tsetting ground state"
     @time prepare_for_collision!(sd, gamma; use_precomputed_gs=use_precomputed_gs)
-
     # check the extremes for stability of the method
     if extremes
       @info "Computing the extremes..."
       four_extremes = get_tiles(sd[startup_equation], startup_equation;
         tiles=2,
-        plot_finals=true)
+        plot_finals=false)
       print("--> Extremes computed. Going on? [N/y]")
       ans = readline()
       if ans != "y"
@@ -89,7 +88,7 @@ function get_tiles(
   archetype = sim
   sgrid[1, 1] = archetype
   @time begin
-    for (vx, vv) in enumerate(vel_list)
+  for (vx, vv) in enumerate(vel_list)
       for (bx, bb) in enumerate(bar_list)
         sgrid[bx, vx] = imprint_vel_set_bar(archetype; vv=vv, bb=bb)
       end
@@ -104,7 +103,7 @@ function get_tiles(
   iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
 
   full_time = @elapsed begin
-  Threads.@threads for vx in 1:length(vel_list)
+  @distributed (+) for vx in 1:length(vel_list)
     vv = vel_list[vx]
     print("\n===[", vx, "]===\n")
     for (bx, bb) in enumerate(bar_list)
@@ -164,8 +163,8 @@ function get_tiles(
       print("\n\t T = ", tran[bx, vx])
     end
     if !isapprox(tran[bx, vx] + refl[bx, vx], 1.0, atol=1e-5)
-      print("\n\tWARN: [T+R != 1.0]")
-      warning[bx, vx] = 1.0
+      @printf "\n\tWARN: [T+R = %.4f]" tran[bx, vx]+refl[bx, vx]
+      warning[bx, vx] = tran[bx, vx]+refl[bx, vx]
     end
   end
 end

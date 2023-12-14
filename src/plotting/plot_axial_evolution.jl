@@ -1,4 +1,11 @@
-function plot_axial_heatmap(u, time_axis, sim::Sim{1, Array{ComplexF64}}; info=false, doifft=true, show=false, title="__")
+function plot_axial_heatmap(
+  u, 
+  time_axis, 
+  sim::Sim{1, Array{ComplexF64}}; 
+  info=false, 
+  doifft=true, 
+  show=false, 
+  title="__")
     @unpack t, X = sim; x = X[1]
     u = reduce(hcat, u)
     doifft ? u = mapslices(x->xspace(x, sim),u,dims=(1)) : nothing
