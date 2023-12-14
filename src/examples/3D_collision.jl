@@ -3,7 +3,7 @@ import CondensateDynamics.V
 using CUDA
 using LaTeXStrings, Plots
 using CUDA.CUFFT
-import Makie, GLMakie
+# import Makie, GLMakie
 
 JULIA_CUDA_SOFT_MEMORY_LIMIT ="95%"
 # ================ plotting functions
@@ -17,46 +17,46 @@ function dense(phi)
     return density/pmax
 end
 
-function isosurface_animation(sol,Nt, sim;file="3Dcollision.gif", framerate=3)
-    saveto=joinpath("media",file)
-    scene = Makie.Scene()
-    tindex = Makie.Observable(1)
-    iter = [Array(xspace(sol[k], sim)) for k in 1:Nt]
-    iter = [abs2.(iter[k]) for k in 1:Nt]
-    scene = Makie.volume(Makie.@lift(iter[$tindex]/maximum(iter[$tindex])),
-                        algorithm =:iso,
-                        isovalue=0.2,
-                        isorange=0.1,
-                        colormap=:greens, 
-                        alpha=0.3,
-                        transparency=true
-    )
+# function isosurface_animation(sol,Nt, sim;file="3Dcollision.gif", framerate=3)
+#     saveto=joinpath("media",file)
+#     scene = Makie.Scene()
+#     tindex = Makie.Observable(1)
+#     iter = [Array(xspace(sol[k], sim)) for k in 1:Nt]
+#     iter = [abs2.(iter[k]) for k in 1:Nt]
+#     scene = Makie.volume(Makie.@lift(iter[$tindex]/maximum(iter[$tindex])),
+#                         algorithm =:iso,
+#                         isovalue=0.2,
+#                         isorange=0.1,
+#                         colormap=:greens, 
+#                         alpha=0.3,
+#                         transparency=true
+#     )
 
-    R = 180
-    eyeat = Makie.Vec3f0(R,0,0)
-    lookat = Makie.Vec3f0(-50,-50,0)
-    Makie.record(scene, saveto, 1:Nt; framerate=framerate) do i
-        # Makie.update_cam!(scene, eyeat, lookat)
-        # Makie.rotate_cam!(scene, 0., -0.4, 0.)
-        tindex[] = i
-    end
-    return
-end
+#     R = 180
+#     eyeat = Makie.Vec3f0(R,0,0)
+#     lookat = Makie.Vec3f0(-50,-50,0)
+#     Makie.record(scene, saveto, 1:Nt; framerate=framerate) do i
+#         # Makie.update_cam!(scene, eyeat, lookat)
+#         # Makie.rotate_cam!(scene, 0., -0.4, 0.)
+#         tindex[] = i
+#     end
+#     return
+# end
 
-function isosurface(sol)
-    scene = Makie.Scene()
-    tindex = Makie.Observable(1)
-    psol = Array(abs2.(xspace(sol, sim)))
-    scene = Makie.volume(psol/maximum(psol),
-                        algorithm =:iso,
-                        colormap=:greens, 
-                        alpha=0.3,
-                        isovalue=0.2,
-                        isorange=0.1,
-    )
-    display(scene)
-    return
-end
+# function isosurface(sol)
+#     scene = Makie.Scene()
+#     tindex = Makie.Observable(1)
+#     psol = Array(abs2.(xspace(sol, sim)))
+#     scene = Makie.volume(psol/maximum(psol),
+#                         algorithm =:iso,
+#                         colormap=:greens, 
+#                         alpha=0.3,
+#                         isovalue=0.2,
+#                         isorange=0.1,
+#     )
+#     display(scene)
+#     return
+# end
 
 
 # =================== simulation settings

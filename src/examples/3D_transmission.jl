@@ -4,7 +4,7 @@ using CUDA
 using LaTeXStrings, Plots
 import GR
 using CUDA.CUFFT
-import Makie, GLMakie
+# import Makie, GLMakie
 
 include("plot_isosurfaces.jl")
 update_parameters()

@@ -9,9 +9,9 @@ using HDF5
 import JLD2
 using Interpolations
 using OrderedCollections
-
+using Printf
 using LaTeXStrings
-import Makie, GLMakie
+# import Makie, GLMakie
 using ProgressBars, Colors, ColorSchemes
 
 # FFTW.set_num_threads(2)

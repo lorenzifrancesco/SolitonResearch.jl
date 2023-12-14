@@ -1,5 +1,5 @@
 import GR
-using CondensateDynamics, CUDA, FFTW, Makie, GLMakie
+using CondensateDynamics, CUDA, FFTW # Makie, GLMakie
 using OrdinaryDiffEq
 using LSODA
 import CondensateDynamics.V

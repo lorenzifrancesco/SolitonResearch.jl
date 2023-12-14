@@ -4,7 +4,7 @@ using CUDA
 using LaTeXStrings, Plots
 import GR
 using CUDA.CUFFT
-import Makie, GLMakie
+# import Makie, GLMakie
 import JLD2
 
 include("plot_axial_evolution.jl")

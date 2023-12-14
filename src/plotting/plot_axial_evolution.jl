@@ -72,21 +72,21 @@ function plot_final_density!(p, u, sim::Sim{3, CuArray{ComplexF64}}; axis=1, inf
     return p
 end
 
-function animation_final_density(u,sim::Sim{1, Array{ComplexF64}};file="1D_evolution.gif",framerate=30,info=false, doifft=true)
-    @unpack t, X, Nt = sim; x = Array(X[1]) |> real
-    # override until next solution 
-    Nt = length(u)
-    saveto=joinpath("media",file)
-    tindex = Makie.Observable(1)
-    iter = u
-    doifft ? iter = [Array(xspace(u[k], sim)) for k in 1:Nt] : nothing
-    #iter = [ for k in 1:Nt]
-    iter = [abs2.(iter[k]) for k in 1:Nt]
-    fig, ax= Makie.lines(x, Makie.@lift(iter[$tindex]))
+# function animation_final_density(u,sim::Sim{1, Array{ComplexF64}};file="1D_evolution.gif",framerate=30,info=false, doifft=true)
+#     @unpack t, X, Nt = sim; x = Array(X[1]) |> real
+#     # override until next solution 
+#     Nt = length(u)
+#     saveto=joinpath("media",file)
+#     tindex = Makie.Observable(1)
+#     iter = u
+#     doifft ? iter = [Array(xspace(u[k], sim)) for k in 1:Nt] : nothing
+#     #iter = [ for k in 1:Nt]
+#     iter = [abs2.(iter[k]) for k in 1:Nt]
+#     fig, ax= Makie.lines(x, Makie.@lift(iter[$tindex]))
 
-    Makie.limits!(ax, x[1], x[end], 0, 1)
-    Makie.record(fig, saveto, 1:Nt; framerate=framerate) do i
-        tindex[] = i
-    end
-    return fig
-end
+#     Makie.limits!(ax, x[1], x[end], 0, 1)
+#     Makie.record(fig, saveto, 1:Nt; framerate=framerate) do i
+#         tindex[] = i
+#     end
+#     return fig
+# end

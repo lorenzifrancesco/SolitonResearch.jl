@@ -9,38 +9,38 @@ function dense(phi)
     return density/pmax
 end
 
-function isosurface_animation(sol,Nt, sim;file="3Devolution.gif",framerate=3)
-    saveto=joinpath("media",file)
-    scene = Makie.Scene()
-    tindex = Makie.Observable(1)
-    iter = [Array(xspace(sol[k], sim)) for k in 1:Nt]
-    iter = [abs2.(iter[k]) for k in 1:Nt]
-    fig = Makie.volume(Makie.@lift(iter[$tindex]/maximum(iter[$tindex])),
-                        algorithm =:iso,
-                        isovalue=0.2,
-                        isorange=0.1,
-                        transparency=true
-    )
+# function isosurface_animation(sol,Nt, sim;file="3Devolution.gif",framerate=3)
+#     saveto=joinpath("media",file)
+#     scene = Makie.Scene()
+#     tindex = Makie.Observable(1)
+#     iter = [Array(xspace(sol[k], sim)) for k in 1:Nt]
+#     iter = [abs2.(iter[k]) for k in 1:Nt]
+#     fig = Makie.volume(Makie.@lift(iter[$tindex]/maximum(iter[$tindex])),
+#                         algorithm =:iso,
+#                         isovalue=0.2,
+#                         isorange=0.1,
+#                         transparency=true
+#     )
 
-    R = 180
-    Makie.record(fig, saveto, 1:Nt; framerate=framerate) do i
-        tindex[] = i
-    end
-    return
-end
+#     R = 180
+#     Makie.record(fig, saveto, 1:Nt; framerate=framerate) do i
+#         tindex[] = i
+#     end
+#     return
+# end
 
-function isosurface(sol)
-    scene = Makie.Scene()
-    tindex = Makie.Observable(1)
-    psol = Array(abs2.(xspace(sol, sim)))
-    scene = Makie.volume(psol/maximum(psol),
-                        algorithm =:iso,
-                        isovalue=0.1,
-                        isorange=0.1,
-    )
-    display(scene)
-    return
-end
+# function isosurface(sol)
+#     scene = Makie.Scene()
+#     tindex = Makie.Observable(1)
+#     psol = Array(abs2.(xspace(sol, sim)))
+#     scene = Makie.volume(psol/maximum(psol),
+#                         algorithm =:iso,
+#                         isovalue=0.1,
+#                         isorange=0.1,
+#     )
+#     display(scene)
+#     return
+# end
 
 function show_slice(slice_position::Float64, psi, sim::Sim{3, CuArray{Complex{Float64}}}; file="slice.png", show=false)
     @unpack L, X, N = sim

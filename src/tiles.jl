@@ -5,11 +5,11 @@ function tiles(;
   use_precomputed_gs=true,
   use_precomputed_tiles=false,
   return_maximum=false,
-  number_of_tiles=2)
+  number_of_tiles=2, 
+  equation_selection = ["N"])
 
   # FFTW.set_num_threads(20)
   startup_equation = ["G1"]
-  equation_selection = ["Np"]
   
   if Threads.nthreads() == 1
     @warn "running in single thread mode!"
@@ -30,7 +30,7 @@ function tiles(;
     @info "\tsetting ground state"
     @time prepare_for_collision!(sd, gamma; use_precomputed_gs=use_precomputed_gs)
 
-    # check the extremes for stability
+    # check the extremes for stability of the method
     if extremes
       @info "Computing the extremes..."
       four_extremes = get_tiles(sd[startup_equation], startup_equation;
@@ -108,13 +108,16 @@ function get_tiles(
   full_time = @elapsed begin
   Threads.@threads for vx in 1:length(vel_list)
     vv = vel_list[vx]
+    print("\n===[", vx, "]===\n")
     for (bx, bb) in enumerate(bar_list)
     sim = sgrid[bx, vx]
     collapse_occured = false
-    print("\n\tComputing tile", (vv, bb))
+    print("\nComputing tile", (vv, bb))
     sol = nothing
     try
+      print("\n")
       avg_iteration_time += @elapsed sol = runsim(sim; info=false)
+      print("\n")
 
       # FIXME avoid NPSE+ memory filling problem
       # @info "GC..."
@@ -139,7 +142,7 @@ function get_tiles(
         @info "Detected solver failure"
         tran[bx, vx] = 0.0
         refl[bx, vx] = 1.0
-        print("\t T = ", tran[bx, vx])
+        @printf "\n\t T = %.2f" tran[bx, vx]
       else
         # CHANGE : saving the maximum value occured in the iterations
         final = sol.u[end]
@@ -157,30 +160,30 @@ function get_tiles(
         tran[bx, vx] = ns(final, sim, mask_tran)
         refl[bx, vx] = ns(final, sim, mask_refl)
       else
-        @info "Run complete, detected collapse..."
+        print("\n\tRun complete, detected collapse...")
         tran[bx, vx] = NaN
       end
-      print("\t T = ", tran[bx, vx])
+      print("\n\t T = ", tran[bx, vx])
     end
     if !isapprox(tran[bx, vx] + refl[bx, vx], 1.0, atol=1e-5)
-      print("WARN: [T+R != 1.0]")
+      print("\n\tWARN: [T+R != 1.0]")
       warning[bx, vx] = 1.0
     end
   end
 end
-  end
-  print("\n")
-  @info "_________________________________________________"
-  @info "Pavement time    = "*string(full_time)
-  @info "Single tile time = "*string(avg_iteration_time / tiles^2)
-  @info "_________________________________________________"
-  print("\n")
-  JLD2.@save("tran_$(name).jld2", tran)
-  JLD2.@save("refl_$(name).jld2", refl)
-  JLD2.@save("warn_$(name).jld2", warning)
-  norm_bar = bar_list / max_bar
-  norm_vel = vel_list / max_vel
-  return tran
+end
+print("\n")
+@info "_________________________________________________"
+@info "Pavement time    = "*string(full_time)
+@info "Single tile time = "*string(avg_iteration_time / tiles^2)
+@info "_________________________________________________"
+print("\n")
+JLD2.@save("tran_$(name).jld2", tran)
+JLD2.@save("refl_$(name).jld2", refl)
+JLD2.@save("warn_$(name).jld2", warning)
+norm_bar = bar_list / max_bar
+norm_vel = vel_list / max_vel
+return tran
 end
 
 """
