@@ -1,4 +1,4 @@
-JULIA_CUDA_SOFT_MEMORY_LIMIT = "95%"
+# JULIA_CUDA_SOFT_MEMORY_LIMIT = "95%"
 
 function tiles(;
   extremes=false,
@@ -8,8 +8,8 @@ function tiles(;
   number_of_tiles=2)
 
   # FFTW.set_num_threads(20)
-  
-  equation_selection = ["G1", "N"]
+  startup_equation = ["G1"]
+  equation_selection = ["Np"]
   
   if Threads.nthreads() == 1
     @warn "running in single thread mode!"
@@ -19,7 +19,7 @@ function tiles(;
 
   save_path = "results/"
   gamma_list = [0.65]
-
+  @info "This is a message"
   for gamma in gamma_list
     print("\n---> Using gamma: ", gamma)
     @info "_____________________________"
@@ -33,8 +33,7 @@ function tiles(;
     # check the extremes for stability
     if extremes
       @info "Computing the extremes..."
-      check_eq = "G3"
-      four_extremes = get_tiles(sd[check_eq], check_eq;
+      four_extremes = get_tiles(sd[startup_equation], startup_equation;
         tiles=2,
         plot_finals=true)
       print("--> Extremes computed. Going on? [N/y]")
