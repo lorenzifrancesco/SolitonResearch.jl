@@ -164,7 +164,7 @@ function get_tiles(
     end
     if !isapprox(tran[bx, vx] + refl[bx, vx], 1.0, atol=1e-5)
       print("WARN: [T+R != 1.0]")
-      warn[bx, vx] = 1.0
+      warning[bx, vx] = 1.0
     end
   end
 end
