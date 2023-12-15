@@ -192,80 +192,80 @@ function solitons(
     plot_final_density!(p, [npse_plus], sim_npse_plus; label="NPSE+", ls=:dash, color=:green)
     JLD2.save(join([save_path, "gs_dict.jld2"]), gs_dict)
 
-    # == GPE 3D =======================================================
-    time_requirement[5] = @elapsed begin
-      x_3d_range = range(-sim_gpe_3d.L[1] / 2, sim_gpe_3d.L[1] / 2, length(sim_gpe_3d.X[1])+1)[1:end-1]
-      x_axis = sim_npse.X[1] |> real
-      x_axis_3d = sim_gpe_3d.X[1] |> real
-      x_1d_range = range(-sim_npse.L[1] / 2, sim_npse.L[1] / 2, length(sim_npse.X[1])+1)[1:end-1]
-      if take_advantage
-        x = Array(sim_gpe_3d.X[1] |> real)
-        y = Array(sim_gpe_3d.X[2] |> real)
-        z = Array(sim_gpe_3d.X[3] |> real)
+    # # == GPE 3D =======================================================
+    # time_requirement[5] = @elapsed begin
+    #   x_3d_range = range(-sim_gpe_3d.L[1] / 2, sim_gpe_3d.L[1] / 2, length(sim_gpe_3d.X[1])+1)[1:end-1]
+    #   x_axis = sim_npse.X[1] |> real
+    #   x_axis_3d = sim_gpe_3d.X[1] |> real
+    #   x_1d_range = range(-sim_npse.L[1] / 2, sim_npse.L[1] / 2, length(sim_npse.X[1])+1)[1:end-1]
+    #   if take_advantage
+    #     x = Array(sim_gpe_3d.X[1] |> real)
+    #     y = Array(sim_gpe_3d.X[2] |> real)
+    #     z = Array(sim_gpe_3d.X[3] |> real)
 
-        tmp = zeros(sim_gpe_3d.N[1], sim_gpe_3d.N[2], sim_gpe_3d.N[3]) |> complex
-        if plus
-          axial = sqrt.(abs2.(xspace(npse_plus, sim_npse_plus)))
-        else
-          axial = sqrt.(abs2.(xspace(npse, sim_npse)))
-        end
-        axial_imprint = LinearInterpolation(x_1d_range, axial, extrapolation_bc=Line())
-        for (ix, x) in enumerate(x)
-          for (iy, y) in enumerate(y)
-            for (iz, z) in enumerate(z)
-              tmp[ix, iy, iz] = axial_imprint(x) * exp(-1 / 2 * (y^2 + z^2))
-            end
-          end
-        end
-        sim_gpe_3d.psi_0 = CuArray(tmp)
-        sim_gpe_3d.psi_0 .= sim_gpe_3d.psi_0 / sqrt(sum(abs2.(sim_gpe_3d.psi_0) * sim_gpe_3d.dV)) #this may be responsible for the strange behaviour
-        initial_3d = copy(sim_gpe_3d.psi_0)
-        kspace!(sim_gpe_3d.psi_0, sim_gpe_3d)
-      end
+    #     tmp = zeros(sim_gpe_3d.N[1], sim_gpe_3d.N[2], sim_gpe_3d.N[3]) |> complex
+    #     if plus
+    #       axial = sqrt.(abs2.(xspace(npse_plus, sim_npse_plus)))
+    #     else
+    #       axial = sqrt.(abs2.(xspace(npse, sim_npse)))
+    #     end
+    #     axial_imprint = LinearInterpolation(x_1d_range, axial, extrapolation_bc=Line())
+    #     for (ix, x) in enumerate(x)
+    #       for (iy, y) in enumerate(y)
+    #         for (iz, z) in enumerate(z)
+    #           tmp[ix, iy, iz] = axial_imprint(x) * exp(-1 / 2 * (y^2 + z^2))
+    #         end
+    #       end
+    #     end
+    #     sim_gpe_3d.psi_0 = CuArray(tmp)
+    #     sim_gpe_3d.psi_0 .= sim_gpe_3d.psi_0 / sqrt(sum(abs2.(sim_gpe_3d.psi_0) * sim_gpe_3d.dV)) #this may be responsible for the strange behaviour
+    #     initial_3d = copy(sim_gpe_3d.psi_0)
+    #     kspace!(sim_gpe_3d.psi_0, sim_gpe_3d)
+    #   end
 
-      if haskey(gs_dict, hs("G3", gamma_param))
-        if use_precomputed
-          @info "\t G3:    |  x  "
-        else
-          @info "\t G3:  x |     (deleting)"
-          delete!(gs_dict, hs("G3", gamma_param))
-          try
-            sol = runsim(sim_gpe_3d; info=info)
-            @info "total imaginary time $(sol.cnt * sim_gpe_3d.dt)"
-          catch err
-            if isa(err, Gpe3DCollapse)
-              @warn "3D GPE collapsed"
-            else
-              throw(err)
-            end
-          end
-          push!(gs_dict, hs("G3", gamma_param) => Array(sol.u))
-        end
-      else
-          @info "\t G3:  x |     "
-        try
-          sol = runsim(sim_gpe_3d; info=info)
-        catch err
-          if isa(err, Gpe3DCollapse)
-            @warn "3D GPE collapsed"
-          else
-            throw(err)
-          end
-        end
-        push!(gs_dict, hs("G3", gamma_param) => Array(sol.u))
-      end
-      gpe_3d = CuArray(gs_dict[hs("G3", gamma_param)])
-      JLD2.save(join([save_path, "gs_dict.jld2"]), gs_dict)
-    end
-    # linear interpolation      
-    x_axis_3d = sim_gpe_3d.X[1] |> real
-    dx = sim_gpe_3d.X[1][2] - sim_gpe_3d.X[1][1]
-    final_axial = Array(sum(abs2.(xspace(gpe_3d, sim_gpe_3d)), dims=(2, 3)))[:, 1, 1] * sim_gpe_3d.dV / dx |> real
-    # we need to renormalize (error in the sum??)
-    final_axial = final_axial / sum(final_axial * dx) |> real
+    #   if haskey(gs_dict, hs("G3", gamma_param))
+    #     if use_precomputed
+    #       @info "\t G3:    |  x  "
+    #     else
+    #       @info "\t G3:  x |     (deleting)"
+    #       delete!(gs_dict, hs("G3", gamma_param))
+    #       try
+    #         sol = runsim(sim_gpe_3d; info=info)
+    #         @info "total imaginary time $(sol.cnt * sim_gpe_3d.dt)"
+    #       catch err
+    #         if isa(err, Gpe3DCollapse)
+    #           @warn "3D GPE collapsed"
+    #         else
+    #           throw(err)
+    #         end
+    #       end
+    #       push!(gs_dict, hs("G3", gamma_param) => Array(sol.u))
+    #     end
+    #   else
+    #       @info "\t G3:  x |     "
+    #     try
+    #       sol = runsim(sim_gpe_3d; info=info)
+    #     catch err
+    #       if isa(err, Gpe3DCollapse)
+    #         @warn "3D GPE collapsed"
+    #       else
+    #         throw(err)
+    #       end
+    #     end
+    #     push!(gs_dict, hs("G3", gamma_param) => Array(sol.u))
+    #   end
+    #   gpe_3d = CuArray(gs_dict[hs("G3", gamma_param)])
+    #   JLD2.save(join([save_path, "gs_dict.jld2"]), gs_dict)
+    # end
+    # # linear interpolation      
+    # x_axis_3d = sim_gpe_3d.X[1] |> real
+    # dx = sim_gpe_3d.X[1][2] - sim_gpe_3d.X[1][1]
+    # final_axial = Array(sum(abs2.(xspace(gpe_3d, sim_gpe_3d)), dims=(2, 3)))[:, 1, 1] * sim_gpe_3d.dV / dx |> real
+    # # we need to renormalize (error in the sum??)
+    # final_axial = final_axial / sum(final_axial * dx) |> real
     
-    solution_3d = LinearInterpolation(x_3d_range, final_axial, extrapolation_bc=Line())
-    plot!(p, x_axis, solution_3d(x_axis), label="3D-GPE", color=:red)
+    # solution_3d = LinearInterpolation(x_3d_range, final_axial, extrapolation_bc=Line())
+    # plot!(p, x_axis, solution_3d(x_axis), label="3D-GPE", color=:red)
 
     @info time_requirement
     # =========================================================
