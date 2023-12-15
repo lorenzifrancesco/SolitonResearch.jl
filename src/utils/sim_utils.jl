@@ -203,10 +203,10 @@ function imprint_vel_set_bar(
     simc.t = LinRange(simc.ti, simc.tf, simc.Nt)
     simc.time_steps = Int(floor((simc.tf-simc.ti)/dt))
     simc.dt = dt
-    if time_steps > time_step_limit
+    if simc.time_steps > time_step_limit
         @warn "time_steps > $time_step_limit, clipping dt"
         simc.time_steps = time_step_limit
-        simc.dt = (tf-ti)/time_steps
+        simc.dt = (simc.tf-simc.ti)/time_steps
     end
     xspace!(simc.psi_0, simc)
     @. simc.psi_0 = abs(simc.psi_0) * exp(-im*(x)*vv)

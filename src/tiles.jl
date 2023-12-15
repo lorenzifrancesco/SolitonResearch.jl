@@ -22,11 +22,15 @@ function tiles(;
     print("\n---> Using gamma: ", gamma)
     @info "_____________________________"
     @info "\tpreparing"
-    sd = load_parameters_alt(gamma_param=gamma; nosaves=true)
-    sd = filter(p -> (first(p) in equation_selection), sd)
-    @info "\tRequired simulations: " keys(sd)
-    @info "\tsetting ground state"
-    @time prepare_for_collision!(sd, gamma; use_precomputed_gs=use_precomputed_gs)
+
+    # FIXME we are using literals ---> @everywhere load_into_workers
+    @everywhere begin
+    sd = load_parameters_alt(gamma_param=0.65; nosaves=true)
+    sd = filter(p -> (first(p) in ["G1"]), sd)
+    end
+    # @info "\tRequired simulations: " keys(sd)
+    # @info "\tsetting ground state"
+    @time @everywhere prepare_for_collision!(sd, 0.65; use_precomputed_gs=true)
     # check the extremes for stability of the method
     if extremes
       @info "Computing the extremes..."
@@ -101,7 +105,7 @@ function get_tiles(
   @info "Running tiling..."
   avg_iteration_time = 0.0
   iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
-
+  
   full_time = @elapsed begin
   @distributed (+) for vx in 1:length(vel_list)
     vv = vel_list[vx]
