@@ -13,7 +13,6 @@ using Printf
 using LaTeXStrings
 # import Makie, GLMakie
 using ProgressBars, Colors, ColorSchemes
-
 # FFTW.set_num_threads(2)
 
 include("init/_plot_settings.jl")

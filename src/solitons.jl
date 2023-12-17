@@ -31,7 +31,7 @@ function solitons(
     # sim_cc = sd["CQ"]
     sim_npse = sd["N"]
     sim_npse_plus = sd["Np"]
-    sim_gpe_3d = sd["G3"]
+    # sim_gpe_3d = sd["G3"]
 
     @info "Computing for gamma = $(gamma_param)"
     @info "\t EQ:comp| load"

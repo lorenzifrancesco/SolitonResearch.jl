@@ -106,12 +106,12 @@ function get_tiles(
   full_time = @elapsed begin
   Threads.@threads for vx in 1:length(vel_list)
     vv = vel_list[vx]
-    print("\n===[", vx, "]===\n")
+    @printf("Computing velocity [vx=%i] / %i", vx, tiles)
     for (bx, bb) in enumerate(bar_list)
     sim = sgrid[bx, vx]
     collapse_occured = false
-    print("\nComputing tile", (vv, bb))
     sol = nothing
+    @printf("barrier [bx=%i]", bx)
     try
       print("\n")
       avg_iteration_time += @elapsed sol = runsim(sim; info=false)
@@ -120,6 +120,8 @@ function get_tiles(
       # FIXME avoid NPSE+ memory filling problem
       # @info "GC..."
       # GC.gc()
+      @info Sys.free_memory() / 2^20
+      
       if plot_finals
         pp = plot_final_density(sol.u, sim; show=false)
         savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
@@ -148,7 +150,7 @@ function get_tiles(
         xspace!(final, sim)
         tran[bx, vx] = ns(final, sim, mask_tran)
         refl[bx, vx] = ns(final, sim, mask_refl)
-        print("\t T = ", tran[bx, vx])
+        @printf "\n\t T = %.2f" tran[bx, vx]
       end
     else
       if !collapse_occured
@@ -161,7 +163,7 @@ function get_tiles(
         print("\n\tRun complete, detected collapse...")
         tran[bx, vx] = NaN
       end
-      print("\n\t T = ", tran[bx, vx])
+      @printf "\n\t T = %.2f" tran[bx, vx]
     end
     if !isapprox(tran[bx, vx] + refl[bx, vx], 1.0, atol=1e-5)
       print("\n\tWARN: [T+R != 1.0]")
