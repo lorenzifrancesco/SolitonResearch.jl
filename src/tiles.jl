@@ -106,12 +106,12 @@ function get_tiles(
   full_time = @elapsed begin
   Threads.@threads for vx in 1:length(vel_list)
     vv = vel_list[vx]
-    @printf("Computing velocity [vx=%i] / %i", vx, tiles)
+    @printf("Computing velocity [vx=%i/%i]\n", vx, tiles)
     for (bx, bb) in enumerate(bar_list)
     sim = sgrid[bx, vx]
     collapse_occured = false
     sol = nothing
-    @printf("barrier [bx=%i]", bx)
+    @printf("barrier [bx=%i]\n", bx)
     try
       print("\n")
       avg_iteration_time += @elapsed sol = runsim(sim; info=false)
