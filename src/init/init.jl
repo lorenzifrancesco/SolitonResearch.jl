@@ -36,7 +36,7 @@ function load_parameters_alt(
       N=N, 
       )
     @unpack_Sim sim_gpe_1d
-
+    name="GPE-1D"
     iswitch = iswitch_all
     equation = GPE_1D
     manual = true
@@ -71,6 +71,7 @@ function load_parameters_alt(
     @. psi_0 = exp(-(x-x0)^2/initial_width) * exp(-im*(x-x0)*vv)
     psi_0 = psi_0 / sqrt(ns(psi_0, sim_gpe_1d))
     kspace!(psi_0, sim_gpe_1d)
+    @assert isapprox(nsk(psi_0, sim_gpe_1d), 1.0)
     @pack_Sim! sim_gpe_1d
 
     if "G1" in eqs
@@ -90,13 +91,15 @@ function load_parameters_alt(
 
     # =========================================================
     ## NPSE
+    L = (Lx,)
+    N = (N_axial_1D,)
     sim_npse = Sim{length(L), Array{Complex{Float64}}}(
       L=L, 
       N=N, 
       )
     initial_state = zeros(N[1])
     @unpack_Sim sim_npse
-
+    name="NPSE"
     iswitch = iswitch_all
     manual = true
     solver = SplitStep
@@ -136,20 +139,23 @@ function load_parameters_alt(
     @. psi_0 = exp(-(x-x0)^2/initial_width) * exp(-im*(x-x0)*vv)
     psi_0 = psi_0 / sqrt(ns(psi_0, sim_gpe_1d))
     kspace!(psi_0, sim_gpe_1d)
+    @assert isapprox(nsk(psi_0, sim_npse), 1.0)
     @pack_Sim! sim_npse
 
     if "N" in eqs
         push!(sim_dictionary, "N" => sim_npse)
     end
     # =========================================================
-    ## NPSE (unable to copy)
+    ## NPSE_plus (unable to copy)
+    L = (Lx,)
+    N = (N_axial_1D,)
     sim_npse_plus = Sim{length(L), Array{Complex{Float64}}}(
       L=L, 
       N=N, 
       )
     initial_state = zeros(N[1])
     @unpack_Sim sim_npse_plus
-
+    name = "NPSE-plus"
     iswitch = iswitch_all
     manual = true
     solver = SplitStep
@@ -189,6 +195,7 @@ function load_parameters_alt(
     @. psi_0 = exp(-(x-x0)^2/initial_width) * exp(-im*(x-x0)*vv)
     psi_0 = psi_0 / sqrt(ns(psi_0, sim_gpe_1d))
     kspace!(psi_0, sim_gpe_1d)
+    @assert isapprox(nsk(psi_0, sim_npse_plus), 1.0)
     @pack_Sim! sim_npse_plus
 
     if "Np" in eqs

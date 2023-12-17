@@ -26,7 +26,6 @@ function tiles(;
     @info "\tRequired simulations: " keys(sd)
     @info "\tsetting ground state"
     @time prepare_for_collision!(sd, gamma; use_precomputed_gs=use_precomputed_gs)
-
     # # check the extremes for stability of the method
     # if extremes
     #   @info "Computing the extremes..."
@@ -149,6 +148,7 @@ function get_tiles(
         # CHANGE : saving the maximum value occured in the iterations
         final = sol.u[end]
         # @info "Run complete, computing transmission..."
+        xspace!(final, sim)
         tran[bx, vx] = ns(final, sim, mask_tran)
         refl[bx, vx] = ns(final, sim, mask_refl)
         @printf "\n\t T = %.2f" tran[bx, vx]
@@ -157,6 +157,7 @@ function get_tiles(
       if !collapse_occured
         final = sol.u[end]
         # @info "Run complete, computing transmission..."
+        xspace!(final, sim)
         tran[bx, vx] = ns(final, sim, mask_tran)
         refl[bx, vx] = ns(final, sim, mask_refl)
       else
@@ -225,7 +226,6 @@ function get_tiles(
         qq = plot_axial_heatmap(sol.u, sim.t, sim; show=false)
         savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
       end
-
 
     catch err
       if isa(err, NpseCollapse) || isa(err, Gpe3DCollapse)
