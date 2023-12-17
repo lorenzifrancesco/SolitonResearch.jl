@@ -6,10 +6,9 @@ function tiles(;
   use_precomputed_tiles=false,
   return_maximum=false,
   number_of_tiles=2, 
-  equation_selection = ["Np"])
+  equation = "Np")
 
-  # FFTW.set_num_threads(20)
-  startup_equation = ["G1"]
+  startup_equation = "G1"
   
   if Threads.nthreads() == 1
     @warn "running in single thread mode!"
@@ -22,24 +21,26 @@ function tiles(;
     print("\n---> Using gamma: ", gamma)
     @info "_____________________________"
     @info "\tpreparing"
-    sd = load_parameters_alt(gamma_param=gamma; nosaves=true)
-    sd = filter(p -> (first(p) in equation_selection), sd)
+    sd = load_parameters_alt(gamma_param=gamma; nosaves=false)
+    sd = filter(p -> (first(p) in [equation]), sd)
     @info "\tRequired simulations: " keys(sd)
     @info "\tsetting ground state"
     @time prepare_for_collision!(sd, gamma; use_precomputed_gs=use_precomputed_gs)
 
-    # check the extremes for stability of the method
-    if extremes
-      @info "Computing the extremes..."
-      four_extremes = get_tiles(sd[startup_equation], startup_equation;
-        tiles=2,
-        plot_finals=true)
-      print("--> Extremes computed. Going on? [N/y]")
-      ans = readline()
-      if ans != "y"
-        return
-      end
-    end
+    # # check the extremes for stability of the method
+    # if extremes
+    #   @info "Computing the extremes..."
+    #   four_extremes = get_tiles(sd[startup_equation], startup_equation;
+    #     tiles=2,
+    #     plot_finals=true)
+    #   print("--> Extremes computed. Going on? [N/y]")
+    #   ans = readline()
+    #   if ans != "y"
+    #     return
+    #   end
+    # end
+
+    # create the dictionary
     if isfile(save_path * "tile_dict.jld2")
       @info "Loading Tiles library..."
       tile_dict = JLD2.load(save_path * "tile_dict.jld2")
@@ -49,22 +50,23 @@ function tiles(;
       JLD2.save(save_path * "tile_dict.jld2", tile_dict)
     end
 
-    for (name, sim) in sd
-      print("\n")
-      @info "==============================================="
-      @info "\t\tTiling "*string(name)
-      @info "==============================================="
-      print("\n")
-      if haskey(tile_dict, hs(name, gamma)) && use_precomputed_tiles
-        @info "Already found tile for " name, gamma
-      else
-        tile = get_tiles(sim, name; tiles=number_of_tiles)
-        @info "==== Saving tiles"
-        push!(tile_dict, hs(name, gamma) => tile)
-        JLD2.save(save_path * "tile_dict.jld2", tile_dict)
-      end
+    
+    name = equation
+    sim = sd[name]
+    print("\n")
+    @info "==============================================="
+    @info "\t\tTiling "*string(name)
+    @info "==============================================="
+    print("\n")
+    if haskey(tile_dict, hs(name, gamma)) && use_precomputed_tiles
+      @info "Already found tile for " name, gamma
+    else
+      tile = get_tiles(sim, name; tiles=number_of_tiles)
+      @info "==== Saving tiles"
+      push!(tile_dict, hs(name, gamma) => tile)
+      JLD2.save(save_path * "tile_dict.jld2", tile_dict)
     end
-  end
+    end
   view_all_tiles()
 end
 
@@ -106,7 +108,8 @@ function get_tiles(
   full_time = @elapsed begin
   Threads.@threads for vx in 1:length(vel_list)
     vv = vel_list[vx]
-    @printf("Computing velocity [vx=%i/%i]\n", vx, tiles)
+    @printf("===Computing velocity [vx=%i/%i]\n", vx, tiles)
+    @info Sys.free_memory() / 2^20
     for (bx, bb) in enumerate(bar_list)
     sim = sgrid[bx, vx]
     collapse_occured = false
@@ -119,13 +122,12 @@ function get_tiles(
 
       # FIXME avoid NPSE+ memory filling problem
       # @info "GC..."
-      # GC.gc()
-      @info Sys.free_memory() / 2^20
+      GC.gc()
       
       if plot_finals
-        pp = plot_final_density(sol.u, sim; show=false)
+        pp = plot_final_density(sol.u, sim; show=false, title=@sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles))
         savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
-        qq = plot_axial_heatmap(sol.u, sim.t, sim; show=false)
+        qq = plot_axial_heatmap(sol.u, sim.t, sim; show=false, title=@sprintf("[vx=%i, bx=%i]/", vx, bx, tiles))
         savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
       end
     catch err
@@ -147,7 +149,6 @@ function get_tiles(
         # CHANGE : saving the maximum value occured in the iterations
         final = sol.u[end]
         # @info "Run complete, computing transmission..."
-        xspace!(final, sim)
         tran[bx, vx] = ns(final, sim, mask_tran)
         refl[bx, vx] = ns(final, sim, mask_refl)
         @printf "\n\t T = %.2f" tran[bx, vx]
@@ -156,7 +157,6 @@ function get_tiles(
       if !collapse_occured
         final = sol.u[end]
         # @info "Run complete, computing transmission..."
-        xspace!(final, sim)
         tran[bx, vx] = ns(final, sim, mask_tran)
         refl[bx, vx] = ns(final, sim, mask_refl)
       else
@@ -166,7 +166,7 @@ function get_tiles(
       @printf "\n\t T = %.2f" tran[bx, vx]
     end
     if !isapprox(tran[bx, vx] + refl[bx, vx], 1.0, atol=1e-5)
-      print("\n\tWARN: [T+R != 1.0]")
+      @printf("\n\tWARN: [T+R = %.4f]", tran[bx, vx]+refl[bx, vx])
       warning[bx, vx] = 1.0
     end
   end
