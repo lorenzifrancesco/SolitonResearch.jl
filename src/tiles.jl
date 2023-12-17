@@ -109,11 +109,13 @@ function get_tiles(
   full_time = @elapsed begin
   @distributed (+) for vx in 1:length(vel_list)
     vv = vel_list[vx]
-    print("\n===[", vx, "]===\n")
+    # print("\n===[", vx, "]===\n")
+    @printf("Computing velocity [vx=%i] / %i", vx, tiles)
     for (bx, bb) in enumerate(bar_list)
     sim = sgrid[bx, vx]
     collapse_occured = false
-    print("\nComputing tile", (vv, bb))
+    # print("\nComputing tile", (vv, bb))
+    @printf("barrier [bx=%i]", bx)
     sol = nothing
     try
       print("\n")
