@@ -6,7 +6,7 @@ function tiles(;
   use_precomputed_tiles=false,
   return_maximum=false,
   number_of_tiles=2, 
-  equation = "Np")
+  equation = "G1")
 
   startup_equation = "G1"
   
@@ -69,6 +69,7 @@ function tiles(;
   view_all_tiles()
 end
 
+
 function get_tiles(
   sim::Sim{1,Array{Complex{Float64}}},
   name::String="noname";
@@ -105,7 +106,7 @@ function get_tiles(
   iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
 
   full_time = @elapsed begin
-  Threads.@threads for vx in 1:length(vel_list)
+  Threads.@threads for vx in eachindex(vel_list)
     vv = vel_list[vx]
     @printf("===Computing velocity [vx=%i/%i]\n", vx, tiles)
     @info Sys.free_memory() / 2^20
@@ -113,7 +114,7 @@ function get_tiles(
     sim = sgrid[bx, vx]
     collapse_occured = false
     sol = nothing
-    @printf("barrier [bx=%i]\n", bx)
+    @printf("\nbarrier [bx=%i] (%i/%i)\n", bx, bx+tiles*(vx-1), tiles^2)
     try
       print("\n")
       avg_iteration_time += @elapsed sol = runsim(sim; info=false)

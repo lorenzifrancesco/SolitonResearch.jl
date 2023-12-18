@@ -5,7 +5,7 @@ function solitons(
   saveplots::Bool=true,
   show_plots::Bool=false,
   info::Bool=false
-)
+ )
   # pyplot(size=(359, 220))
   sd = load_parameters_alt()
 

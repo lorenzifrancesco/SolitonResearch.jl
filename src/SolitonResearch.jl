@@ -5,7 +5,6 @@ using PrecompileTools
 
 using SolitonDynamics, CUDA, FFTW, OrdinaryDiffEq
 using Plots
-using HDF5
 import JLD2
 using Interpolations
 using OrderedCollections
