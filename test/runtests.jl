@@ -1,3 +1,3 @@
 using Test
 include("test.jl")
-@test 1==2
+@test 1 == 2

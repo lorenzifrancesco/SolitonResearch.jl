@@ -1,4 +1,4 @@
-module SolitonResearch 
+module SolitonResearch
 
 using ExportAll
 using PrecompileTools

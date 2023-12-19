@@ -1,18 +1,18 @@
-function load_parameters_alt(
-    ; vv::Float64 = 0.0,
-    bb::Float64 = 0.0, 
-    gamma_param::Float64=0.65,
-    Nsaves::Int64=200,
-    eqs=["G1", "CQ", "N", "Np", "G3"],
-    nosaves=false,
+function load_parameters_alt(;
+    vv::Float64 = 0.0,
+    bb::Float64 = 0.0,
+    gamma_param::Float64 = 0.65,
+    Nsaves::Int64 = 200,
+    eqs = ["G1", "CQ", "N", "Np", "G3"],
+    nosaves = false,
     N_axial_1D = 256, ## optimized values
     N_axial_3D = 256,
     N_trans_3D = 40,
     Lx = 40.0,
     Lt = 10.0,
-    )
+)
 
-    sim_dictionary::OrderedDict{String, Sim} = OrderedDict()
+    sim_dictionary::OrderedDict{String,Sim} = OrderedDict()
     maxiters_1d = 1e10
     maxiters_3d = 1e10
     dt_all = 0.01 # important for the prepare_for_collision function, then overwritten in imprint_vel_set_bar
@@ -26,49 +26,47 @@ function load_parameters_alt(
     # time_steps_all = 200 do not fix it. Use a constant dt
 
     initial_width = 10
-    
+
     # =========================================================
     ## 1D-GPE 
     L = (Lx,)
     N = (N_axial_1D,)
-    sim_gpe_1d = Sim{length(L), Array{Complex{Float64}}}(
-      L=L, 
-      N=N, 
-      )
+    sim_gpe_1d = Sim{length(L),Array{Complex{Float64}}}(L = L, N = N)
     @unpack_Sim sim_gpe_1d
-    name="GPE-1D"
+    name = "GPE-1D"
     iswitch = iswitch_all
     equation = GPE_1D
     manual = true
     solver = SplitStep
     # interaction parameter
-    g = - 2 * gamma_param
+    g = -2 * gamma_param
     n = 100
     abstol = abstol_all
     x = X[1]
     k = K[1]
     x0 = 0.0 # L[1] / 4
-    dV= volume_element(L, N)
+    dV = volume_element(L, N)
     flags = FFTW.EXHAUSTIVE
     alg = BS3()
 
     # will be overwritten
     if nosaves
-      Nt = 2
+        Nt = 2
     else
-      Nt = Nsaves
+        Nt = Nsaves
     end
     tf = 2.0
     t = LinRange(ti, tf, Nt)
     dt = dt_all
-    time_steps = Int(floor((tf-ti)/dt))
+    time_steps = Int(floor((tf - ti) / dt))
     # specs for GS sim
     maxiters = maxiters_1d
 
     # SPR condensate bright soliton t in units of omega_perp^-1
     analytical_gs = zeros(N)
-    @. analytical_gs = sqrt(gamma_param/2) * 2/(exp(gamma_param*x) + exp(-x*gamma_param)) 
-    @. psi_0 = exp(-(x-x0)^2/initial_width) * exp(-im*(x-x0)*vv)
+    @. analytical_gs =
+        sqrt(gamma_param / 2) * 2 / (exp(gamma_param * x) + exp(-x * gamma_param))
+    @. psi_0 = exp(-(x - x0)^2 / initial_width) * exp(-im * (x - x0) * vv)
     psi_0 = psi_0 / sqrt(ns(psi_0, sim_gpe_1d))
     kspace!(psi_0, sim_gpe_1d)
     @assert isapprox(nsk(psi_0, sim_gpe_1d), 1.0)
@@ -93,50 +91,48 @@ function load_parameters_alt(
     ## NPSE
     L = (Lx,)
     N = (N_axial_1D,)
-    sim_npse = Sim{length(L), Array{Complex{Float64}}}(
-      L=L, 
-      N=N, 
-      )
+    sim_npse = Sim{length(L),Array{Complex{Float64}}}(L = L, N = N)
     initial_state = zeros(N[1])
     @unpack_Sim sim_npse
-    name="NPSE"
+    name = "NPSE"
     iswitch = iswitch_all
     manual = true
     solver = SplitStep
     # interaction parameter
-    g = - 2 * gamma_param
+    g = -2 * gamma_param
     n = 100
     abstol = abstol_all
     x = X[1]
     k = K[1]
     x0 = 0.0 # L[1] / 4
-    dV= volume_element(L, N)
+    dV = volume_element(L, N)
     flags = FFTW.EXHAUSTIVE
     alg = BS3()
 
     equation = NPSE
     # interaction parameter
-    if gamma_param > 2/3
+    if gamma_param > 2 / 3
         @warn "we should expect NPSE collapse"
     end
     sigma2 = init_sigma2(g)
     # will be overwritten
     if nosaves
-      Nt = 2
+        Nt = 2
     else
-      Nt = Nsaves
+        Nt = Nsaves
     end
     tf = 2.0
     t = LinRange(ti, tf, Nt)
     dt = dt_all
-    time_steps = Int(floor((tf-ti)/dt))
+    time_steps = Int(floor((tf - ti) / dt))
     # specs for GS sim
     maxiters = maxiters_1d
 
     # SPR condensate bright soliton t in units of omega_perp^-1
     analytical_gs = zeros(N)
-    @. analytical_gs = sqrt(gamma_param/2) * 2/(exp(gamma_param*x) + exp(-x*gamma_param)) 
-    @. psi_0 = exp(-(x-x0)^2/initial_width) * exp(-im*(x-x0)*vv)
+    @. analytical_gs =
+        sqrt(gamma_param / 2) * 2 / (exp(gamma_param * x) + exp(-x * gamma_param))
+    @. psi_0 = exp(-(x - x0)^2 / initial_width) * exp(-im * (x - x0) * vv)
     psi_0 = psi_0 / sqrt(ns(psi_0, sim_gpe_1d))
     kspace!(psi_0, sim_gpe_1d)
     @assert isapprox(nsk(psi_0, sim_npse), 1.0)
@@ -149,10 +145,7 @@ function load_parameters_alt(
     ## NPSE_plus (unable to copy)
     L = (Lx,)
     N = (N_axial_1D,)
-    sim_npse_plus = Sim{length(L), Array{Complex{Float64}}}(
-      L=L, 
-      N=N, 
-      )
+    sim_npse_plus = Sim{length(L),Array{Complex{Float64}}}(L = L, N = N)
     initial_state = zeros(N[1])
     @unpack_Sim sim_npse_plus
     name = "NPSE-plus"
@@ -160,39 +153,40 @@ function load_parameters_alt(
     manual = true
     solver = SplitStep
     # interaction parameter
-    g = - 2 * gamma_param
+    g = -2 * gamma_param
     n = 100
     abstol = abstol_all
     x = X[1]
     k = K[1]
     x0 = 0.0 # L[1] / 4
-    dV= volume_element(L, N)
+    dV = volume_element(L, N)
     flags = FFTW.EXHAUSTIVE
     alg = BS3()
 
     equation = NPSE_plus
     # interaction parameter
-    if gamma_param > 2/3
+    if gamma_param > 2 / 3
         @warn "we should expect NPSE collapse"
     end
     sigma2 = init_sigma2(g)
     # will be overwritten
     if nosaves
-      Nt = 2
+        Nt = 2
     else
-      Nt = Nsaves
+        Nt = Nsaves
     end
     tf = 2.0
     t = LinRange(ti, tf, Nt)
     dt = dt_all
-    time_steps = Int(floor((tf-ti)/dt))
+    time_steps = Int(floor((tf - ti) / dt))
     # specs for GS sim
     maxiters = maxiters_1d
 
     # SPR condensate bright soliton t in units of omega_perp^-1
     analytical_gs = zeros(N)
-    @. analytical_gs = sqrt(gamma_param/2) * 2/(exp(gamma_param*x) + exp(-x*gamma_param)) 
-    @. psi_0 = exp(-(x-x0)^2/initial_width) * exp(-im*(x-x0)*vv)
+    @. analytical_gs =
+        sqrt(gamma_param / 2) * 2 / (exp(gamma_param * x) + exp(-x * gamma_param))
+    @. psi_0 = exp(-(x - x0)^2 / initial_width) * exp(-im * (x - x0) * vv)
     psi_0 = psi_0 / sqrt(ns(psi_0, sim_gpe_1d))
     kspace!(psi_0, sim_gpe_1d)
     @assert isapprox(nsk(psi_0, sim_npse_plus), 1.0)
