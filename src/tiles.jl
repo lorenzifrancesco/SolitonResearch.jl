@@ -6,7 +6,7 @@ function tiles(;
   use_precomputed_tiles=false,
   return_maximum=false,
   number_of_tiles=2, 
-  equation = "G1")
+  equation = "Np")
 
   startup_equation = "G1"
   
@@ -16,7 +16,6 @@ function tiles(;
 
   save_path = "results/"
   gamma_list = [0.65]
-  @info "This is a message"
   for gamma in gamma_list
     print("\n---> Using gamma: ", gamma)
     @info "_____________________________"
@@ -26,18 +25,6 @@ function tiles(;
     @info "\tRequired simulations: " keys(sd)
     @info "\tsetting ground state"
     @time prepare_for_collision!(sd, gamma; use_precomputed_gs=use_precomputed_gs)
-    # # check the extremes for stability of the method
-    # if extremes
-    #   @info "Computing the extremes..."
-    #   four_extremes = get_tiles(sd[startup_equation], startup_equation;
-    #     tiles=2,
-    #     plot_finals=true)
-    #   print("--> Extremes computed. Going on? [N/y]")
-    #   ans = readline()
-    #   if ans != "y"
-    #     return
-    #   end
-    # end
 
     # create the dictionary
     if isfile(save_path * "tile_dict.jld2")
@@ -74,7 +61,7 @@ function get_tiles(
   sim::Sim{1,Array{Complex{Float64}}},
   name::String="noname";
   tiles=100,
-  plot_finals=false)
+  plot_finals=true)
 
   saveto = "../media/tiles_$(name).pdf"
   max_vel = 1
@@ -106,72 +93,74 @@ function get_tiles(
   iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
 
   full_time = @elapsed begin
-  Threads.@threads for vx in eachindex(vel_list)
+  messages = false
+  # Threads.@threads for vx in eachindex(vel_list)
+  @showprogress "Computing all the velocities..." for vx in eachindex(vel_list)
     vv = vel_list[vx]
-    @printf("===Computing velocity [vx=%i/%i]\n", vx, tiles)
-    @info Sys.free_memory() / 2^20
+    messages && @printf("===Computing velocity [vx=%i/%i]\n", vx, tiles)
+    messages && @info "free memory" Sys.free_memory() / 2^20
     for (bx, bb) in enumerate(bar_list)
-    sim = sgrid[bx, vx]
-    collapse_occured = false
-    sol = nothing
-    @printf("\nbarrier [bx=%i] (%i/%i)\n", bx, bx+tiles*(vx-1), tiles^2)
-    try
-      print("\n")
-      avg_iteration_time += @elapsed sol = runsim(sim; info=false)
-      print("\n")
+      sim = sgrid[bx, vx]
+      collapse_occured = false
+      sol = nothing
+      messages && @printf("\nbarrier [bx=%i] (%i/%i)\n", bx, bx+tiles*(vx-1), tiles^2)
+      try
+        messages && print("\n")
+        avg_iteration_time += @elapsed sol = runsim(sim; info=false)
+        messages && print("\n")
 
-      # FIXME avoid NPSE+ memory filling problem
-      # @info "GC..."
-      GC.gc()
-      
-      if plot_finals
-        pp = plot_final_density(sol.u, sim; show=false, title=@sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles))
-        savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
-        qq = plot_axial_heatmap(sol.u, sim.t, sim; show=false, title=@sprintf("[vx=%i, bx=%i]/", vx, bx, tiles))
-        savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
+        # FIXME avoid NPSE+ memory filling problem
+        # @info "GC..."
+        GC.gc()
+        
+        if plot_finals
+          pp = plot_final_density(sol.u, sim; show=false, title=@sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles))
+          savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
+          qq = plot_axial_heatmap(sol.u, sim.t, sim; show=false, title=@sprintf("[vx=%i, bx=%i]/", vx, bx, tiles))
+          savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
+        end
+      catch err
+        if isa(err, NpseCollapse) || isa(err, Gpe3DCollapse)
+          collapse_occured = true
+        else
+          throw(err)
+        end
       end
-    catch err
-      if isa(err, NpseCollapse) || isa(err, Gpe3DCollapse)
-        collapse_occured = true
+      # catch maxiters hit and set the transmission to zero
+      if sim.manual == false
+        if sol.retcode != ReturnCode.Success
+          # @info "Run complete, computing transmission..."
+          @warn "Detected solver failure"
+          tran[bx, vx] = 0.0
+          refl[bx, vx] = 1.0
+          messages && @printf "\n\t T = %.2f" tran[bx, vx]
+        else
+          # CHANGE : saving the maximum value occured in the iterations
+          final = sol.u[end]
+          # @info "Run complete, computing transmission..."
+          xspace!(final, sim)
+          tran[bx, vx] = ns(final, sim, mask_tran)
+          refl[bx, vx] = ns(final, sim, mask_refl)
+          messages && @printf "\n\t T = %.2f" tran[bx, vx]
+        end
       else
-        throw(err)
+        if !collapse_occured
+          final = sol.u[end]
+          # @info "Run complete, computing transmission..."
+          xspace!(final, sim)
+          tran[bx, vx] = ns(final, sim, mask_tran)
+          refl[bx, vx] = ns(final, sim, mask_refl)
+        else
+          messages && print("\n\tRun complete, detected collapse...")
+          tran[bx, vx] = NaN
+        end
+        messages && @printf "\n\t T = %.2f" tran[bx, vx]
+      end
+      if !isapprox(tran[bx, vx] + refl[bx, vx], 1.0, atol=1e-5)
+        messages && @printf("\n\tWARN: [T+R = %.4f]", tran[bx, vx]+refl[bx, vx])
+        warning[bx, vx] = 1.0
       end
     end
-    # catch maxiters hit and set the transmission to zero
-    if sim.manual == false
-      if sol.retcode != ReturnCode.Success
-        # @info "Run complete, computing transmission..."
-        @info "Detected solver failure"
-        tran[bx, vx] = 0.0
-        refl[bx, vx] = 1.0
-        @printf "\n\t T = %.2f" tran[bx, vx]
-      else
-        # CHANGE : saving the maximum value occured in the iterations
-        final = sol.u[end]
-        # @info "Run complete, computing transmission..."
-        xspace!(final, sim)
-        tran[bx, vx] = ns(final, sim, mask_tran)
-        refl[bx, vx] = ns(final, sim, mask_refl)
-        @printf "\n\t T = %.2f" tran[bx, vx]
-      end
-    else
-      if !collapse_occured
-        final = sol.u[end]
-        # @info "Run complete, computing transmission..."
-        xspace!(final, sim)
-        tran[bx, vx] = ns(final, sim, mask_tran)
-        refl[bx, vx] = ns(final, sim, mask_refl)
-      else
-        print("\n\tRun complete, detected collapse...")
-        tran[bx, vx] = NaN
-      end
-      @printf "\n\t T = %.2f" tran[bx, vx]
-    end
-    if !isapprox(tran[bx, vx] + refl[bx, vx], 1.0, atol=1e-5)
-      @printf("\n\tWARN: [T+R = %.4f]", tran[bx, vx]+refl[bx, vx])
-      warning[bx, vx] = 1.0
-    end
-  end
 end
 end
 print("\n")
@@ -187,6 +176,7 @@ norm_bar = bar_list / max_bar
 norm_vel = vel_list / max_vel
 return tran
 end
+
 
 """
 in the 3D case we do not have sufficient GPU mem, so we go serially
@@ -214,7 +204,7 @@ function get_tiles(
   avg_iteration_time = 0.0
   iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
   full_time = @elapsed for ((vx, vv), (bx, bb)) in ProgressBar(iter)
-    sim = deepcopy(archetype)
+    sim = deepcopy(archmessages && etype)
     collapse_occured = false
     imprint_vel_set_bar!(sim; vv=vv, bb=bb)
     @info "Computing tile" (vv, bb)

@@ -6,7 +6,8 @@ function single_shot_dynamics(sim::Sim{1, Array{Complex{Float64}}})
     t = sol.t
     @info size(u)
     @info size(t)
-    plot_axial_heatmap(u, t, sim; show=true)
+    px = plot_axial_heatmap(u, t, sim; show=true)
+    savefig(px, "media/checks/single_shot.pdf")
     return u
 end
 
