@@ -116,7 +116,7 @@ function get_tiles(
         if plot_finals
           pp = plot_final_density(sol.u, sim; show=false, title=@sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles))
           savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
-          qq = plot_axial_heatmap(sol.u, sim.t, sim; show=false, title=@sprintf("[vx=%i, bx=%i]/", vx, bx, tiles))
+          qq = plot_axial_heatmap(sol.u, sim.t, sim; show=false, title=@sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles))
           savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
         end
       catch err
