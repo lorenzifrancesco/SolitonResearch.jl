@@ -107,8 +107,8 @@ function get_tiles(
     iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
 
     full_time = @elapsed begin
-        # Threads.@threads for vx in eachindex(vel_list)
-        @showprogress "Computing all the velocities..." for vx in eachindex(vel_list)
+        Threads.@threads for vx in eachindex(vel_list)
+        # @showprogress "Computing all the velocities..." for vx in eachindex(vel_list)
             vv = vel_list[vx]
             messages && @printf("===Computing velocity [vx=%i/%i]\n", vx, tiles)
             messages && @info @sprintf("Free memory = %.3f GiB", Sys.free_memory() / 2^30)
