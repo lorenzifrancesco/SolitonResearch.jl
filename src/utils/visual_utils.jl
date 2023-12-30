@@ -18,6 +18,7 @@ function show_psi_0(sim::Sim{1,Array{Complex{Float64}}})
     p = plot(x, abs2.(xpsi_0), label = "density")
     plot!(p, x, abs.(V0), ls = :dot, color = :grey)
     display(p)
+    savefig(p, "media/checks/tmp_psi0.pdf")
 end
 
 function show_psi_0(sim::Sim{3,CuArray{Complex{Float64}}})

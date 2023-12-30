@@ -52,12 +52,15 @@ function plot_final_density(
     color = :black,
     title = "",
     show = false,
+    enforce = true
 )
     @unpack t, X = sim
     x = Array(X[1])
     tmp = u[end]
     doifft ? final = xspace(tmp, sim) : final = tmp
-    @assert isapprox(ns(final, sim), 1.0, atol = 1e-3)
+    if enforce
+      @assert isapprox(ns(final, sim), 1.0, atol = 1e-3)
+    end
     p = plot(
         real.(x),
         abs2.(final),

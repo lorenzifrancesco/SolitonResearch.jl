@@ -9,13 +9,6 @@ function gs_sigma2(gamma_list = [0.65])
         prepare_for_collision!(sd, gamma; use_precomputed_gs = true, info = true)
 
         p = plot(title = "gamma=$(gamma)")
-        # if length(sd)>1
-        #   pal = palette([:blue, :red], length(sd))
-        #   pal = [:blue, :red, :grey, :black]
-        #   @assert length(sd) == 4
-        # else
-        #   pal = [:red]
-        # end
         i = 1
         p = plot()
         for (k, v) in sd
@@ -23,7 +16,6 @@ function gs_sigma2(gamma_list = [0.65])
             est = estimate_sigma2k(v.psi_0, v)
             if length(v.N) == 3
                 est += ones(length(est)) * (1 - est[1])
-                print("asdvasdvasdv___> ", k)
                 plot!(
                     p,
                     real(v.X[1]),

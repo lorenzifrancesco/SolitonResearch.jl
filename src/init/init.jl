@@ -207,7 +207,7 @@ function load_parameters_alt(;
     # manual = true
     # solver = SplitStep
     # g = - gamma_param * (4 * pi)
-    # abstol = abstol_all
+    
     # alg = BS3()
     # # we can augment the accuracy
 
