@@ -1,34 +1,37 @@
 module SolitonResearch
+using Distributed
 
-using ExportAll
-using PrecompileTools
+mess = addprocs(6-nprocs())
+@everywhere begin
+  using ExportAll
+  using PrecompileTools
 
-using SolitonDynamics, CUDA, FFTW, OrdinaryDiffEq
-using Plots
-import JLD2
-using Interpolations
-using OrderedCollections
-using Printf
-using LaTeXStrings
-using ProgressBars, ProgressMeter, Colors, ColorSchemes
+  using SolitonDynamics, CUDA, FFTW, OrdinaryDiffEq
+  using Plots
+  import JLD2
+  using Interpolations
+  using OrderedCollections
+  using Printf
+  using LaTeXStrings
+  using ProgressBars, ProgressMeter, Colors, ColorSchemes
 
-include("init/_plot_settings.jl")
-include("plotting/plot_axial_evolution.jl")
-include("plotting/plot_isosurfaces.jl")
-include("utils/visual_utils.jl")
-include("init/init.jl")
-include("utils/sim_utils.jl")
-include("solitons.jl")
-include("lines.jl")
-include("tiles.jl")
-include("chempot.jl")
-include("auxiliary_scripts/aux_collapse.jl")
-include("auxiliary_scripts/aux_gs.jl")
-include("auxiliary_scripts/aux_collision.jl")
-include("auxiliary_scripts/aux_sigma2.jl")
+  include("init/_plot_settings.jl")
+  include("plotting/plot_axial_evolution.jl")
+  include("plotting/plot_isosurfaces.jl")
+  include("utils/visual_utils.jl")
+  include("init/init.jl")
+  include("utils/sim_utils.jl")
+  include("solitons.jl")
+  include("lines.jl")
+  include("tiles.jl")
+  include("chempot.jl")
+  include("auxiliary_scripts/aux_collapse.jl")
+  include("auxiliary_scripts/aux_gs.jl")
+  include("auxiliary_scripts/aux_collision.jl")
+  include("auxiliary_scripts/aux_sigma2.jl")
+end
 
 @exportAll()
-
 # @setup_workload begin
 #   @compile_workload begin
 #     @info "entering compile workload"

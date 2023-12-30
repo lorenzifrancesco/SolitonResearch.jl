@@ -11,42 +11,42 @@ function tiles(;
     infos=false,
     plot_finals=false
 )
-
+    ### make this step intelligent
     startup_equation = "G1"
-
     if Threads.nthreads() == 1
         @warn "running in single thread mode!"
     end
 
     save_path = "results/"
     gamma_list = [0.65]
-    for gamma in gamma_list
-        print("\n---> Using gamma: ", gamma)
-        @info "_____________________________"
-        @info "\tpreparing"
-        sd = load_parameters_alt(gamma_param = gamma; nosaves = false)
-        sd = filter(p -> (first(p) in [equation]), sd)
-        @info "\tRequired simulations: " keys(sd)
-        @info "\tsetting ground state"
-        @time prepare_for_collision!(sd, gamma; use_precomputed_gs = use_precomputed_gs)
+    @everywhere for gamma in gamma_list
+          print("\n---> Using gamma: ", gamma)
+          @info "_____________________________"
+          @info "\tpreparing"
+          sd = load_parameters_alt(gamma_param = gamma; nosaves = false)
+          sd = filter(p -> (first(p) in [equation]), sd)
+          @info "\tRequired simulations: " keys(sd)
+          @info "\tsetting ground state"
+          @time prepare_for_collision!(sd, gamma; use_precomputed_gs = use_precomputed_gs)
 
-        # create the dictionary
-        if isfile(save_path * "tile_dict.jld2")
-            @info "Loading Tiles library..."
-            tile_dict = JLD2.load(save_path * "tile_dict.jld2")
-        else
-            @info "No Tiles library found! Saving an empty one..."
-            tile_dict = Dict()
-            JLD2.save(save_path * "tile_dict.jld2", tile_dict)
-        end
+          # create the dictionary
+          if isfile(save_path * "tile_dict.jld2")
+              @info "Loading Tiles library..."
+              tile_dict = JLD2.load(save_path * "tile_dict.jld2")
+          else
+              @info "No Tiles library found! Saving an empty one..."
+              tile_dict = Dict()
+              JLD2.save(save_path * "tile_dict.jld2", tile_dict)
+          end
 
-        name = equation
-        sim = sd[name]
-        print("\n")
-        @info "==============================================="
-        @info "\t\tTiling " * string(name)
-        @info "==============================================="
-        print("\n")
+          name = equation
+          sim = sd[name]
+          print("\n")
+          @info "==============================================="
+          @info "\t\tTiling " * string(name)
+          @info "==============================================="
+          print("\n")
+        
         if haskey(tile_dict, hs(name, gamma)) && use_precomputed_tiles
             @info "Already found tile for " name, gamma
         else
@@ -107,10 +107,11 @@ function get_tiles(
     iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
 
     full_time = @elapsed begin
-        Threads.@threads for vx in eachindex(vel_list)
+        # Threads.@threads for vx in eachindex(vel_list)
         # @showprogress "Computing all the velocities..." for vx in eachindex(vel_list)
+        @distributed for vx in eachindex(vel_list)
             vv = vel_list[vx]
-            messages && @printf("===Computing velocity [vx=%i/%i]\n", vx, tiles)
+            messages && @printf("=== Computing velocity [vx=%i/%i]\n", vx, tiles)
             messages && @info @sprintf("Free memory = %.3f GiB", Sys.free_memory() / 2^30)
             for (bx, bb) in enumerate(bar_list)
                 sim = sgrid[bx, vx]
