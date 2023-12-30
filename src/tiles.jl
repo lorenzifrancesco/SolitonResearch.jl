@@ -37,7 +37,6 @@ function tiles(;
             JLD2.save(save_path * "tile_dict.jld2", tile_dict)
         end
 
-
         name = equation
         sim = sd[name]
         print("\n")
@@ -54,7 +53,7 @@ function tiles(;
             JLD2.save(save_path * "tile_dict.jld2", tile_dict)
         end
     end
-    view_all_tiles()
+    # view_all_tiles()
 end
 
 
@@ -62,9 +61,12 @@ function get_tiles(
     sim::Sim{1,Array{Complex{Float64}}},
     name::String = "noname";
     tiles = 100,
-    plot_finals = true,
+    plot_finals = false,
+    messages=true
 )
-
+    if plot_finals
+      @warn "Plotting finals!"
+    end
     saveto = "../media/tiles_$(name).pdf"
     max_vel = 1
     max_bar = 1
@@ -95,54 +97,58 @@ function get_tiles(
     iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
 
     full_time = @elapsed begin
-        messages = false
         # Threads.@threads for vx in eachindex(vel_list)
         @showprogress "Computing all the velocities..." for vx in eachindex(vel_list)
             vv = vel_list[vx]
             messages && @printf("===Computing velocity [vx=%i/%i]\n", vx, tiles)
-            messages && @info "free memory" Sys.free_memory() / 2^20
+            messages && @info @sprintf("Free memory = %.3f GiB", Sys.free_memory() / 2^30)
             for (bx, bb) in enumerate(bar_list)
                 sim = sgrid[bx, vx]
-                collapse_occured = false
+                if bx == 1 || tran[bx-1, vx] != NaN
+                  collapse_occured = false
+                else
+                  @printf("\n Collapse shortcut!")
+                  collapse_occured = true
+                end
                 sol = nothing
                 messages && @printf(
-                    "\nbarrier [bx=%i] (%i/%i)\n",
+                    "\nbarrier [bx=%i] (%i/%i)",
                     bx,
                     bx + tiles * (vx - 1),
                     tiles^2
                 )
-                try
-                    messages && print("\n")
-                    avg_iteration_time += @elapsed sol = runsim(sim; info = false)
-                    messages && print("\n")
+                if !collapse_occured
+                  try
+                      avg_iteration_time += @elapsed sol = runsim(sim; info = false)
+                      messages && print("\n --->")
+                      # FIXME avoid NPSE+ memory filling problem
+                      # @info "GC..."
+                      GC.gc()
 
-                    # FIXME avoid NPSE+ memory filling problem
-                    # @info "GC..."
-                    GC.gc()
-
-                    if plot_finals
-                        pp = plot_final_density(
-                            sol.u,
-                            sim;
-                            show = false,
-                            title = @sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles)
-                        )
-                        savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
-                        qq = plot_axial_heatmap(
-                            sol.u,
-                            sim.t,
-                            sim;
-                            show = false,
-                            title = @sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles)
-                        )
-                        savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
-                    end
-                catch err
-                    if isa(err, NpseCollapse) || isa(err, Gpe3DCollapse)
-                        collapse_occured = true
-                    else
-                        throw(err)
-                    end
+                      if plot_finals
+                          pp = plot_final_density(
+                              sol.u,
+                              sim;
+                              show = false,
+                              title = @sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles)
+                          )
+                          savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
+                          qq = plot_axial_heatmap(
+                              sol.u,
+                              sim.t,
+                              sim;
+                              show = false,
+                              title = @sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles)
+                          )
+                          savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
+                      end
+                  catch err
+                      if isa(err, NpseCollapse) || isa(err, Gpe3DCollapse)
+                          collapse_occured = true
+                      else
+                          throw(err)
+                      end
+                  end
                 end
                 # catch maxiters hit and set the transmission to zero
                 if sim.manual == false
@@ -151,7 +157,7 @@ function get_tiles(
                         @warn "Detected solver failure"
                         tran[bx, vx] = 0.0
                         refl[bx, vx] = 1.0
-                        messages && @printf "\n\t T = %.2f" tran[bx, vx]
+                        messages && @printf "\t T = %.2f" tran[bx, vx]
                     else
                         # CHANGE : saving the maximum value occured in the iterations
                         final = sol.u[end]
@@ -159,7 +165,7 @@ function get_tiles(
                         xspace!(final, sim)
                         tran[bx, vx] = ns(final, sim, mask_tran)
                         refl[bx, vx] = ns(final, sim, mask_refl)
-                        messages && @printf "\n\t T = %.2f" tran[bx, vx]
+                        messages && @printf "\t T = %.2f" tran[bx, vx]
                     end
                 else
                     if !collapse_occured
@@ -169,14 +175,14 @@ function get_tiles(
                         tran[bx, vx] = ns(final, sim, mask_tran)
                         refl[bx, vx] = ns(final, sim, mask_refl)
                     else
-                        messages && print("\n\tRun complete, detected collapse...")
+                        messages && print("\tRun complete, detected collapse...")
                         tran[bx, vx] = NaN
                     end
-                    messages && @printf "\n\t T = %.2f" tran[bx, vx]
+                    messages && @printf "\t T = %.2f" tran[bx, vx]
                 end
                 if !isapprox(tran[bx, vx] + refl[bx, vx], 1.0, atol = 1e-5)
                     messages &&
-                        @printf("\n\tWARN: [T+R = %.4f]", tran[bx, vx] + refl[bx, vx])
+                        @printf("\tWARN: [T+R = %.4f]", tran[bx, vx] + refl[bx, vx])
                     warning[bx, vx] = 1.0
                 end
             end
@@ -184,8 +190,9 @@ function get_tiles(
     end
     print("\n")
     @info "_________________________________________________"
-    @info "Pavement time    = " * string(full_time)
-    @info "Single tile time = " * string(avg_iteration_time / tiles^2)
+    @info "Pavement time    = " * @sprintf("%.3f", full_time)
+    @info "% time in solver = " * @sprintf("%.3f, %.0f %% of pavement time", avg_iteration_time, avg_iteration_time/full_time*100)
+    @info "Single tile time = " * @sprintf("%.3f", avg_iteration_time / tiles^2)
     @info "_________________________________________________"
     print("\n")
     JLD2.@save("tran_$(name).jld2", tran)
@@ -301,6 +308,7 @@ end
 function view_all_tiles()
     # pyplot(size=(300, 220))
     # pyplot(size=(300, 260))
+    # backend(:pyplot)
     tile_file = "results/tile_dict.jld2"
     @assert isfile(tile_file)
     td = JLD2.load(tile_file)

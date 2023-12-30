@@ -10,9 +10,7 @@ using Interpolations
 using OrderedCollections
 using Printf
 using LaTeXStrings
-# import Makie, GLMakie
 using ProgressBars, ProgressMeter, Colors, ColorSchemes
-# FFTW.set_num_threads(2)
 
 include("init/_plot_settings.jl")
 include("plotting/plot_axial_evolution.jl")
