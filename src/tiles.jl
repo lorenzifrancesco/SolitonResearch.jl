@@ -7,6 +7,9 @@ function tiles(;
     return_maximum = false,
     number_of_tiles = 2,
     equation = "Np",
+    messages=false, 
+    infos=false,
+    plot_finals=false
 )
 
     startup_equation = "G1"
@@ -47,7 +50,13 @@ function tiles(;
         if haskey(tile_dict, hs(name, gamma)) && use_precomputed_tiles
             @info "Already found tile for " name, gamma
         else
-            tile = get_tiles(sim, name; tiles = number_of_tiles)
+            tile = get_tiles(sim, 
+              name; 
+              tiles = number_of_tiles, 
+              messages = messages, 
+              infos = infos,
+              plot_finals = plot_finals
+              )
             @info "==== Saving tiles"
             push!(tile_dict, hs(name, gamma) => tile)
             JLD2.save(save_path * "tile_dict.jld2", tile_dict)
@@ -62,7 +71,8 @@ function get_tiles(
     name::String = "noname";
     tiles = 100,
     plot_finals = false,
-    messages=true
+    messages=true, 
+    infos=true
 )
     if plot_finals
       @warn "Plotting finals!"
@@ -119,7 +129,7 @@ function get_tiles(
                 )
                 if !collapse_occured
                   try
-                      avg_iteration_time += @elapsed sol = runsim(sim; info = false)
+                      avg_iteration_time += @elapsed sol = runsim(sim; info = infos)
                       messages && print("\n --->")
                       # FIXME avoid NPSE+ memory filling problem
                       # @info "GC..."
@@ -328,6 +338,7 @@ function view_all_tiles()
         end
         baxis = LinRange(0.0, 1.0, size(v)[1])
         vaxis = LinRange(0.1, 1.0, size(v)[1])
+        @info v
         push!(vaxx, vaxis)
         push!(baxx, baxis)
         ht2 = heatmap(
