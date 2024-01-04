@@ -68,7 +68,11 @@ function prepare_for_collision!(sd, gamma; use_precomputed_gs = false, info = fa
         @info " ---> Writing ground state into sim..."
         if length(sim.N) == 1
             @unpack_Sim sim
-            x0 = L[1] / 4
+            if sim.equation == "Np" 
+              x0 = L[1] / 8
+            else
+              x0 = L[1] / 4
+            end
             shift = Int(x0 / L[1] * N[1])
             iswitch = 1
             x = X[1]
@@ -111,7 +115,11 @@ function imprint_vel_set_bar(
     @unpack_Sim simc
     x = X[1] |> real
     @. V0 = bb * exp(-(x / bw)^2 / 2) # central barrier
-    x0 = L[1] / 4
+    if sim.equation == "Np" 
+      x0 = L[1] / 8
+    else
+      x0 = L[1] / 4
+    end
     if vv == 0.0
         tf = 2.0
     else

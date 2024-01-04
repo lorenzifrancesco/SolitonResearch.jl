@@ -29,3 +29,12 @@ Not using collapse shortcut
 [ Info: Single tile time = 44.470
 [ Info: _________________________________________________
 ```
+
+(20x20) multi
+```
+[ Info: _________________________________________________
+[ Info: Pavement time    = 8330.815
+[ Info: % time in solver = 8293.543, 100 % of pavement time
+[ Info: Single tile time = 20.734
+[ Info: _________________________________________________
+```
