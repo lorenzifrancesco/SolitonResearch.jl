@@ -126,6 +126,7 @@ function get_tiles(
                     bx + tiles * (vx - 1),
                     tiles^2
                 )
+                infos && messages && print("\n")
                 if !collapse_occured
                   try
                       avg_iteration_time += @elapsed sol = runsim(sim; info = infos)
