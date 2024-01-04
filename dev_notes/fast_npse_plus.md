@@ -19,3 +19,13 @@ Not using collapse shortcut
 [ Info: Single tile time = 28.535
 [ Info: _________________________________________________
 ```
+
+
+(5x5) multithreaded
+```
+[ Info: _________________________________________________
+[ Info: Pavement time    = 1154.177
+[ Info: % time in solver = 1111.748, 96 % of pavement time
+[ Info: Single tile time = 44.470
+[ Info: _________________________________________________
+```

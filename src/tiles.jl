@@ -120,8 +120,8 @@ function get_tiles(
                   collapse_occured = true
                 end
                 sol = nothing
-                messages && @printf(
-                    "\nbarrier [bx=%i] (%i/%i)",
+                messages && @printf( "\n[tid=%i | bx=%i] (%i/%i)",
+                    Threads.threadid(),
                     bx,
                     bx + tiles * (vx - 1),
                     tiles^2
