@@ -1774,7 +1774,7 @@ uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
 
 [[deps.SolitonDynamics]]
 deps = ["Adapt", "BoundaryValueDiffEq", "CUDA", "DiffEqCallbacks", "DiffEqGPU", "Distributed", "ExportAll", "FFTW", "FileIO", "ForwardDiff", "Interpolations", "IntervalArithmetic", "IntervalRootFinding", "JLD2", "LazyArrays", "LinearAlgebra", "LinearSolve", "LoopVectorization", "NonlinearSolve", "OrdinaryDiffEq", "Parameters", "PrecompileTools", "ProgressBars", "ProgressMeter", "RecursiveArrayTools", "Reexport", "SciMLNLSolve", "StaticArrays", "SteadyStateDiffEq", "Test"]
-path = "/home/lorenzi/SolitonDynamics.jl/"
+path = "/home/centos/SolitonDynamics.jl/"
 uuid = "a462cd4a-e029-4138-aed7-681342f91064"
 version = "0.2.0"
 
