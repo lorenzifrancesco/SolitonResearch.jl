@@ -112,12 +112,11 @@ function get_tiles(
             vv = vel_list[vx]
             messages && @printf("===Computing velocity [vx=%i/%i]\n", vx, tiles)
             messages && @info @sprintf("Free memory = %.3f GiB", Sys.free_memory() / 2^30)
+            collapse_occured = false
             for (bx, bb) in enumerate(bar_list)
                 sim = sgrid[bx, vx]
-                if bx == 1 || tran[bx-1, vx] != NaN
-                  collapse_occured = false
-                else
-                  @printf("\n Collapse shortcut!")
+                if bx > 2 && isnan(tran[bx-1, vx]) == NaN && isnan(tran[bx-2, vx])
+                  messages && @printf("\n Collapse shortcut!")
                   collapse_occured = true
                 end
                 sol = nothing
