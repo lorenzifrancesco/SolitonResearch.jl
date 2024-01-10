@@ -108,7 +108,7 @@ function imprint_vel_set_bar(
     vv::Float64 = 0.0,
     bb::Float64 = 0.0,
     bw::Float64 = 0.5,
-    dt::Float64 = 0.01,
+    dt_set::Float64 = 0.001,
     time_step_limit::Int64 = 5000,
 )
     simc = deepcopy(sim)
@@ -126,7 +126,7 @@ function imprint_vel_set_bar(
         tf = 2 * x0 / vv
     end
     t = LinRange(ti, tf, Nt)
-    time_steps = Int(floor((tf - ti) / dt))
+    time_steps = Int(floor((tf - ti) / dt_set))
     if time_steps > time_step_limit
         @warn "time_steps > $time_step_limit, clipping dt"
         time_steps = time_step_limit
@@ -144,7 +144,7 @@ function imprint_vel_set_bar(
     vv::Float64 = 0.0,
     bb::Float64 = 0.0,
     bw::Float64 = 0.5,
-    dt::Float64 = 0.01, # TODO optimize
+    dt_set::Float64 = 0.01, # TODO optimize
     time_step_limit::Int64 = 5000,
 )
 
@@ -161,7 +161,7 @@ function imprint_vel_set_bar(
         tf = 2 * x0 / vv
     end
     t = LinRange(ti, tf, Nt)
-    time_steps = Int(floor((tf - ti) / dt))
+    time_steps = Int(floor((tf - ti) / dt_set))
     if time_steps > time_step_limit
         @warn "time_steps > $time_step_limit, clipping dt"
         time_steps = time_step_limit
@@ -179,7 +179,7 @@ function imprint_vel_set_bar!(
     vv::Float64 = 0.0,
     bb::Float64 = 0.0,
     bw::Float64 = 0.5,
-    dt::Float64 = 0.01,
+    dt_set::Float64 = 0.01,
     time_step_limit::Int64 = 5000,
 )
 
@@ -193,7 +193,7 @@ function imprint_vel_set_bar!(
         tf = 2 * x0 / vv
     end
     t = LinRange(ti, tf, Nt)
-    time_steps = Int(floor((tf - ti) / dt))
+    time_steps = Int(floor((tf - ti) / dt_set))
     if time_steps > time_step_limit
         @warn "time_steps > $time_step_limit, clipping dt"
         time_steps = time_step_limit
@@ -212,7 +212,7 @@ function imprint_vel_set_bar!(
     vv::Float64 = 0.0,
     bb::Float64 = 0.0,
     bw::Float64 = 0.5,
-    dt::Float64 = 0.01, # TODO optimize
+    dt_set::Float64 = 0.01, # TODO optimize
     time_step_limit::Int64 = 5000,
 )
 
@@ -228,7 +228,7 @@ function imprint_vel_set_bar!(
         tf = 2 * x0 / vv
     end
     t = LinRange(ti, tf, Nt)
-    time_steps = Int(floor((tf - ti) / dt))
+    time_steps = Int(floor((tf - ti) / dt_set))
     if time_steps > time_step_limit
         @warn "time_steps > $time_step_limit, clipping dt"
         time_steps = time_step_limit

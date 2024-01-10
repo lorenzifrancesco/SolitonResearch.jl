@@ -115,6 +115,7 @@ function get_tiles(
             collapse_occured = false
             for (bx, bb) in enumerate(bar_list)
                 sim = sgrid[bx, vx]
+                @warn sim.dt
                 if bx > 2 && isnan(tran[bx-1, vx]) == NaN && isnan(tran[bx-2, vx])
                   messages && @printf("\n Collapse shortcut!")
                   collapse_occured = true
