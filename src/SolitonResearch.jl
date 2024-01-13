@@ -5,13 +5,13 @@ using PrecompileTools
 
 using SolitonDynamics, CUDA, FFTW, OrdinaryDiffEq
 using Plots
-import JLD2
+import JLD2, CSV
+using Tables
 using Interpolations
 using OrderedCollections
 using Printf
 using LaTeXStrings
-using ProgressBars, ProgressMeter, Colors, ColorSchemes
-using DelimitedFiles 
+using ProgressBars, ProgressMeter, Colors, ColorSchemes 
 
 include("init/_plot_settings.jl")
 include("plotting/plot_axial_evolution.jl")

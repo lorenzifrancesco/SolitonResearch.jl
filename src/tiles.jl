@@ -189,15 +189,16 @@ function get_tiles(
                  this_iteration_time
                  ))
                  counter+=1
+                 CSV.write("results/tran.csv", Tables.table(tran))
             end
         end
     end
     print("\n")
-    @info "==============================================="
+    @info "==================================================================="
     @info "Pavement time    = " * @sprintf("%.3f", full_time)
     @info "% time in solver = " * @sprintf("%.3f, %.0f %% of pavement time", avg_iteration_time, avg_iteration_time/full_time*100)
     @info "Single tile time = " * @sprintf("%.3f", avg_iteration_time / tiles^2)
-    @info "==============================================="
+    @info "==================================================================="
     print("\n")
     JLD2.@save("tran_$(name).jld2", tran)
     JLD2.@save("refl_$(name).jld2", refl)
