@@ -95,14 +95,19 @@ function get_tiles(
     mask_refl = map(xx -> xx > 0, sgrid[1, 1].X[1] |> real)
     mask_tran = map(xx -> xx < 0, sgrid[1, 1].X[1] |> real)
 
+    this_iteration_time = 0.0
     avg_iteration_time = 0.0
+    counter = 0
     iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
 
+    print("___________________________________________________________________\n")
+    print("|tid| num|   bx|   vx|     dt|   T %|1-T-R %| collapse|   iter time|\n")
+    print("___________________________________________________________________")
     full_time = @elapsed begin
         Threads.@threads for vx in eachindex(vel_list)
         # @showprogress "Computing all the velocities..." for vx in eachindex(vel_list)
             vv = vel_list[vx]
-            messages && @info @sprintf("Free memory = %.3f GiB", Sys.free_memory() / 2^30)
+            # messages && print("\t"*@sprintf("Free memory = %.3f GiB", Sys.free_memory() / 2^30))
             collapse_occured = false
             for (bx, bb) in enumerate(bar_list)
                 sim = sgrid[bx, vx]
@@ -111,18 +116,18 @@ function get_tiles(
                   collapse_occured = true
                 end
                 sol = nothing
-                tile_mess = @sprintf("[tid=%2i] (vx=%3i|bx=%3i) (%2i/%2i), dt=%.3f",
+                tile_mess = @sprintf("| %2i|%4i|  %3i|  %3i|  %.3f|",
                     Threads.threadid(),
+                    bx + tiles * (vx - 1),
                     vx,
                     bx,
-                    bx + tiles * (vx - 1),
-                    tiles^2,
                     sim.dt 
                 )
-                messages && print("\n..."*tile_mess) 
+                # messages && print("\n..."*tile_mess) 
                 if !collapse_occured
                   try
-                      avg_iteration_time += @elapsed sol = runsim(sim; info = infos)
+                      this_iteration_time += @elapsed sol = runsim(sim; info = infos)
+                      avg_iteration_time += this_iteration_time
                       # FIXME avoid NPSE+ memory filling problem
                       GC.gc()
 
@@ -174,11 +179,16 @@ function get_tiles(
                         tran[bx, vx] = ns(final, sim, mask_tran)
                         refl[bx, vx] = ns(final, sim, mask_refl)
                     else
-                        messages && print("\nDetected collapse...")
                         tran[bx, vx] = NaN
                     end
                 end
-                messages && print("\n==>"*tile_mess*@sprintf(", T=%3i%%, 1-T-R=%3i%%", Int(round(tran[bx, vx]*100)), Int(round((1 - tran[bx, vx] - refl[bx, vx])*100)) ))
+                messages && print("\n"*tile_mess*@sprintf("   %3i|    %3i|      %s|%12.2f|",
+                 collapse_occured ? 999 : Int(round(tran[bx, vx]*100)), 
+                 collapse_occured ? 999 : Int(round((1 - tran[bx, vx] - refl[bx, vx])*100)),
+                 collapse_occured ? "yes" : " no", 
+                 this_iteration_time
+                 ))
+                 counter+=1
             end
         end
     end
