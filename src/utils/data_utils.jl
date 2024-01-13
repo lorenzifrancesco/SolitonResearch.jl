@@ -53,13 +53,15 @@ function human_readable_gs(save_path="results/", human_folder="human_readable/")
   end
   display(gs_dict)
   info_file = "infos.txt"
-  writedlm(human_folder * info_file, "ciao")
+  # CSV.write(human_folder * info_file, 4)
   for (k, gs) in gs_dict
     name = ihs(k)[1]
-    gs_file = name * "_complex.dat" ## name, not gamma
-    writedlm(human_folder * gs_file, gs)
-    gs_file = name * "_abs2.dat" ## name, not gamma
-    writedlm(human_folder * gs_file, abs2.(gs))
+    if name != "G3"
+      gs_file = name * "_complex.csv" ## name, not gamma
+      CSV.write(human_folder * gs_file, Tables.table(gs))
+      gs_file = name * "_abs2.csv" ## name, not gamma
+      CSV.write(human_folder * gs_file, Tables.table(abs2.(gs)))
+    end
   end
   nothing
 end
