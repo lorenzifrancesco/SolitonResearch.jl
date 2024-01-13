@@ -1,47 +1,3 @@
-```
- max g allowable for hashing = -5.0, 5.0
-```
-function hs(eq::String, g::Float64)
-  @assert eq in ["G1", "N", "CQ", "Np", "G3"]
-  if g <= -5.0
-    @warn "Collapse regime selected"
-    return string(666666)
-  end
-  n = 0
-  if eq == "G1"
-    n += 0
-  elseif eq == "N"
-    n += 1000
-  elseif eq == "Np"
-    n += 2000
-  elseif eq == "G3"
-    n += 3000
-  elseif eq == "CQ"
-    n += 4000
-  else
-    throw("Unknown equation")
-  end
-  n += Int(round(g * 100))
-  # print("\nCompute hash: ", n, "\n")
-  return string(n)
-end
-
-
-function ihs(s::String)
-  n = parse(Int, s)
-  if n < 500
-    return ("G1", n / 100)
-  elseif n < 1500
-    return ("N", (n - 1000) / 100)
-  elseif n < 2500
-    return ("Np", (n - 2000) / 100)
-  elseif n < 3500
-    return ("G3", (n - 3000) / 100)
-  else
-    return ("CQ", (n - 4000) / 100)
-  end
-end
-
 
 function prepare_for_collision!(sd, gamma; use_precomputed_gs=false, info=false)
   save_path = "results/"
@@ -119,17 +75,16 @@ function imprint_vel_set_bar!(
   t = LinRange(ti, tf, Nt)
   time_steps = Int(floor((tf - ti) / dt_set))
   if time_steps > time_step_limit
-    @warn "time_steps > $time_step_limit, clipping dt"
     time_steps = time_step_limit
     dt = (tf - ti) / time_steps
-    print("\n Setting dt to $dt")
+    @warn @sprintf("t_steps > %i, clipped dt=%0.4f", time_step_limit, dt)
   end
   xspace!(psi_0, sim)
   psi_0 .= circshift(psi_0, shift)
   @. psi_0 = abs(psi_0) * exp(-im * (x) * vv)
   kspace!(psi_0, sim)
   @pack_Sim! sim
-  return sim
+  nothing
 end
 
 ```
@@ -162,9 +117,9 @@ function imprint_vel_set_bar(
   t = LinRange(ti, tf, Nt)
   time_steps = Int(floor((tf - ti) / dt_set))
   if time_steps > time_step_limit
-    @warn "time_steps > $time_step_limit, clipping dt"
     time_steps = time_step_limit
     dt = (tf - ti) / time_steps
+    @warn @sprintf("t_steps > %i, clipped dt=%0.4f", time_step_limit, dt)
   end
   xspace!(psi_0, simc)
   psi_0 .= circshift(psi_0, shift)
@@ -202,16 +157,16 @@ function imprint_vel_set_bar!(
   t = LinRange(ti, tf, Nt)
   time_steps = Int(floor((tf - ti) / dt_set))
   if time_steps > time_step_limit
-    @warn "time_steps > $time_step_limit, clipping dt"
     time_steps = time_step_limit
     dt = (tf - ti) / time_steps
+    @warn @sprintf("t_steps > %i, clipped dt=%0.4f", time_step_limit, dt)
   end
   xspace!(psi_0, sim)
   psi_0 .= circshift(CuArray(psi_0), (shift, 0, 0))
   @. psi_0 = abs(psi_0) * exp(-im * (x) * vv)
   kspace!(psi_0, sim)
   @pack_Sim! sim
-  return sim
+  nothing
 end
 
 ```
@@ -242,9 +197,9 @@ function imprint_vel_set_bar(
   t = LinRange(ti, tf, Nt)
   time_steps = Int(floor((tf - ti) / dt_set))
   if time_steps > time_step_limit
-    @warn "time_steps > $time_step_limit, clipping dt"
     time_steps = time_step_limit
     dt = (tf - ti) / time_steps
+    @warn @sprintf("t_steps > %i, clipped dt=%0.4f", time_step_limit, dt)
   end
   xspace!(psi_0, simc)
   psi_0 .= circshift(CuArray(psi_0), (shift, 0, 0))
@@ -254,12 +209,14 @@ function imprint_vel_set_bar(
   return simc
 end
 
+
 function set_g!(sim::Sim{1,Array{Complex{Float64}}}, gamma_param::Float64=0.4)
   @unpack_Sim sim
   g = -2 * gamma_param
   @pack_Sim! sim
   return
 end
+
 
 function set_g!(sim::Sim{3,CuArray{Complex{Float64}}}, gamma_param::Float64=0.4)
   @unpack_Sim sim

@@ -1,4 +1,49 @@
 
+```
+ max g allowable for hashing = -5.0, 5.0
+```
+function hs(eq::String, g::Float64)
+  @assert eq in ["G1", "N", "CQ", "Np", "G3"]
+  if g <= -5.0
+    @warn "Collapse regime selected"
+    return string(666666)
+  end
+  n = 0
+  if eq == "G1"
+    n += 0
+  elseif eq == "N"
+    n += 1000
+  elseif eq == "Np"
+    n += 2000
+  elseif eq == "G3"
+    n += 3000
+  elseif eq == "CQ"
+    n += 4000
+  else
+    throw("Unknown equation")
+  end
+  n += Int(round(g * 100))
+  # print("\nCompute hash: ", n, "\n")
+  return string(n)
+end
+
+
+function ihs(s::String)
+  n = parse(Int, s)
+  if n < 500
+    return ("G1", n / 100)
+  elseif n < 1500
+    return ("N", (n - 1000) / 100)
+  elseif n < 2500
+    return ("Np", (n - 2000) / 100)
+  elseif n < 3500
+    return ("G3", (n - 3000) / 100)
+  else
+    return ("CQ", (n - 4000) / 100)
+  end
+end
+
+
 function human_readable_gs(save_path="results/", human_folder="human_readable/")
   if isfile(save_path * "gs_dict.jld2")
     @info "Loading GS library..."

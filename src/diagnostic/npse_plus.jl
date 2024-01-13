@@ -14,13 +14,18 @@ imprint_vel_set_bar!(sim,
   vv=0.4,
   bb=0.333333333
 )
-## run the simulations
+
+## print some infos and run the simulations
+@info sim.dt
+@info sim.tf
+@info sim.L[1]
+
 @time begin
   sol = runsim(sim)
 end
 
 psi2 = abs2.(xspace(sol.u[end], sim))
 p = plot(real(sim.X[1]), psi2)
-savefig(p, "media/tmp.pdf")
+savefig(p, "diagnostic/media/tmp.pdf")
 
 plot_axial_heatmap(sol.u, sol.t, sim)

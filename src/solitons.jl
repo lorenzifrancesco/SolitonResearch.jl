@@ -328,7 +328,10 @@ function solitons(;
 end
 
 function get_ground_state(sim; info=false)
-  @assert sim.iswitch == -im
+  if sim.iswitch == 1
+    @warn "Manually setting iswitch to -im"
+    sim.iswitch = -im
+  end
   res = Array(runsim(sim; info=info).u)
   @assert size(res) == sim.N
   return res
