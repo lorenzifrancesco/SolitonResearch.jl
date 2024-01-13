@@ -333,23 +333,3 @@ function get_ground_state(sim; info=false)
   @assert size(res) == sim.N
   return res
 end
-
-function human_readable_gs(save_path="results/", human_folder="human_readable/")
-  if isfile(save_path * "gs_dict.jld2")
-    @info "Loading GS library..."
-    gs_dict = JLD2.load(save_path * "gs_dict.jld2")
-  else
-    @info "No GS library found! Quitting."
-  end
-  display(gs_dict)
-  info_file = "infos.txt"
-  writedlm(human_folder * info_file, "ciao")
-  for (k, gs) in gs_dict
-    name = ihs(k)[1]
-    gs_file = name * "_complex.dat" ## name, not gamma
-    writedlm(human_folder * gs_file, gs)
-    gs_file = name * "_abs2.dat" ## name, not gamma
-    writedlm(human_folder * gs_file, abs2.(gs))
-  end
-  nothing
-end
