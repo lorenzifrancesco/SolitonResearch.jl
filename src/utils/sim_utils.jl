@@ -115,7 +115,7 @@ function imprint_vel_set_bar(
   @unpack_Sim simc
   x = X[1] |> real
   @. V0 = bb * exp(-(x / bw)^2 / 2) # central barrier
-  if sim.equation == "Np"
+  if sim.equation == NPSE_plus
     x0 = L[1] / 8
   else
     x0 = L[1] / 4
