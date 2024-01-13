@@ -344,11 +344,12 @@ function human_readable_gs(save_path="results/", human_folder="human_readable/")
   display(gs_dict)
   info_file = "infos.txt"
   writedlm(human_folder * info_file, "ciao")
-
-
   for (k, gs) in gs_dict
-    gs_file = ihs[k] * ".dat" ## name, not gamma
+    name = ihs(k)[1]
+    gs_file = name * "_complex.dat" ## name, not gamma
     writedlm(human_folder * gs_file, gs)
+    gs_file = name * "_abs2.dat" ## name, not gamma
+    writedlm(human_folder * gs_file, abs2.(gs))
   end
   nothing
 end
