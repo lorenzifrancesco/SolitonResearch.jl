@@ -1,5 +1,6 @@
 
 function prepare_for_collision!(sd, gamma; use_precomputed_gs=false, info=false)
+  @info "______________________________"
   save_path = "results/"
   if isfile(save_path * "gs_dict.jld2")
     @info "Loading GS library..."
@@ -42,6 +43,7 @@ function prepare_for_collision!(sd, gamma; use_precomputed_gs=false, info=false)
     end
     @info @sprintf("Done %s", name)
   end
+  @info "______________________________"
   return sd
 end
 

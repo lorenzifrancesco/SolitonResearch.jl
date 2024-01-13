@@ -5,13 +5,13 @@ gr()
 ## load the simulations
 sd = load_parameters()
 ## prepare in gs
-prepare_for_collision!(sd, 0.65)
+prepare_for_collision!(sd, 0.65, use_precomputed_gs=true)
 ## select the NPSE+
 sim = sd["Np"]
 ## imprint velocity set barrier
 imprint_vel_set_bar!(sim,
   dt_set=0.01,
-  vv=0.4,
+  vv=0.5,
   bb=0.333333333
 )
 
@@ -21,7 +21,7 @@ imprint_vel_set_bar!(sim,
 @info sim.L[1]
 
 @time begin
-  sol = runsim(sim)
+  sol = runsim(sim, info=true)
 end
 
 psi2 = abs2.(xspace(sol.u[end], sim))

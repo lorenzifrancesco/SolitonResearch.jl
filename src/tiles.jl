@@ -42,7 +42,7 @@ function tiles(;
     if haskey(tile_dict, hs(equation, gamma)) && use_precomputed_tiles
         @info "Already found tile for " equation, gamma
     else
-        @info "_________________________________________________\n\t Running tiling procedure"
+        @info "===============================================\n\t Running tiling subroutine"
         tile = get_tiles(sim, 
           equation; 
           tiles = number_of_tiles, 
@@ -78,7 +78,6 @@ function get_tiles(
     bar_list = LinRange(0, max_bar, tiles)
     tran = Array{Float64,2}(undef, (tiles, tiles))
     refl = Array{Float64,2}(undef, (tiles, tiles))
-    warning = zeros((tiles, tiles))
 
     @info "Filling sim grid..."
     sgrid = Array{Sim,2}(undef, (tiles, tiles))
@@ -91,11 +90,11 @@ function get_tiles(
             end
         end
     end
+    @info "Done filling."
     # all sims have the same x
     mask_refl = map(xx -> xx > 0, sgrid[1, 1].X[1] |> real)
     mask_tran = map(xx -> xx < 0, sgrid[1, 1].X[1] |> real)
 
-    @info "Running tiling..."
     avg_iteration_time = 0.0
     iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
 
@@ -107,25 +106,24 @@ function get_tiles(
             collapse_occured = false
             for (bx, bb) in enumerate(bar_list)
                 sim = sgrid[bx, vx]
-                @warn sim.dt
                 if bx > 2 && isnan(tran[bx-1, vx]) == NaN && isnan(tran[bx-2, vx])
                   messages && @printf("\n Collapse shortcut!")
                   collapse_occured = true
                 end
                 sol = nothing
-                messages && @printf( "\n[tid=%i | bx=%i] (%i/%i)",
+                tile_mess = @sprintf("[tid=%2i] (vx=%3i|bx=%3i) (%2i/%2i), dt=%.3f",
                     Threads.threadid(),
+                    vx,
                     bx,
                     bx + tiles * (vx - 1),
-                    tiles^2
+                    tiles^2,
+                    sim.dt 
                 )
-                infos && messages && print("\n")
+                messages && print("\n..."*tile_mess) 
                 if !collapse_occured
                   try
                       avg_iteration_time += @elapsed sol = runsim(sim; info = infos)
-                      messages && print("\n --->")
                       # FIXME avoid NPSE+ memory filling problem
-                      # @info "GC..."
                       GC.gc()
 
                       if plot_finals
@@ -133,7 +131,7 @@ function get_tiles(
                               sol.u,
                               sim;
                               show = false,
-                              title = @sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles)
+                              title = @sprintf("[vx=%3i, bx=%3i]/%3i", vx, bx, tiles)
                           )
                           savefig(pp, "media/checks/final_$(name)_$(vx)_$(bx)_$(tiles).pdf")
                           qq = plot_axial_heatmap(
@@ -160,7 +158,6 @@ function get_tiles(
                         @warn "Detected solver failure"
                         tran[bx, vx] = 0.0
                         refl[bx, vx] = 1.0
-                        messages && @printf "\t T = %.2f" tran[bx, vx]
                     else
                         # CHANGE : saving the maximum value occured in the iterations
                         final = sol.u[end]
@@ -168,7 +165,6 @@ function get_tiles(
                         xspace!(final, sim)
                         tran[bx, vx] = ns(final, sim, mask_tran)
                         refl[bx, vx] = ns(final, sim, mask_refl)
-                        messages && @printf "\t T = %.2f" tran[bx, vx]
                     end
                 else
                     if !collapse_occured
@@ -178,29 +174,23 @@ function get_tiles(
                         tran[bx, vx] = ns(final, sim, mask_tran)
                         refl[bx, vx] = ns(final, sim, mask_refl)
                     else
-                        messages && print("\tRun complete, detected collapse...")
+                        messages && print("\nDetected collapse...")
                         tran[bx, vx] = NaN
                     end
-                    messages && @printf "\t T = %.2f" tran[bx, vx]
                 end
-                if !isapprox(tran[bx, vx] + refl[bx, vx], 1.0, atol = 1e-5)
-                    messages &&
-                        @printf("\tWARN: [T+R = %.4f]", tran[bx, vx] + refl[bx, vx])
-                    warning[bx, vx] = 1.0
-                end
+                messages && print("\n==>"*tile_mess*@sprintf(", T=%3i%%, 1-T-R=%3i%%", Int(round(tran[bx, vx]*100)), Int(round((1 - tran[bx, vx] - refl[bx, vx])*100)) ))
             end
         end
     end
     print("\n")
-    @info "_________________________________________________"
+    @info "==============================================="
     @info "Pavement time    = " * @sprintf("%.3f", full_time)
     @info "% time in solver = " * @sprintf("%.3f, %.0f %% of pavement time", avg_iteration_time, avg_iteration_time/full_time*100)
     @info "Single tile time = " * @sprintf("%.3f", avg_iteration_time / tiles^2)
-    @info "_________________________________________________"
+    @info "==============================================="
     print("\n")
     JLD2.@save("tran_$(name).jld2", tran)
     JLD2.@save("refl_$(name).jld2", refl)
-    JLD2.@save("warn_$(name).jld2", warning)
     norm_bar = bar_list / max_bar
     norm_vel = vel_list / max_vel
     return tran
