@@ -2,7 +2,7 @@
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "716f4170d8fc51ce39e3daac932453c9607c26f9"
+project_hash = "d37a30b318ace56621cc45fe2405c15f01a3c2d3"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "41c37aa88889c171f1300ceac1313c06e891d245"
@@ -1774,7 +1774,7 @@ uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
 
 [[deps.SolitonDynamics]]
 deps = ["Adapt", "BoundaryValueDiffEq", "CUDA", "DiffEqCallbacks", "DiffEqGPU", "Distributed", "ExportAll", "FFTW", "FileIO", "ForwardDiff", "Interpolations", "IntervalArithmetic", "IntervalRootFinding", "JLD2", "LazyArrays", "LinearAlgebra", "LinearSolve", "LoopVectorization", "NonlinearSolve", "OrdinaryDiffEq", "Parameters", "PrecompileTools", "ProgressBars", "ProgressMeter", "RecursiveArrayTools", "Reexport", "SciMLNLSolve", "StaticArrays", "SteadyStateDiffEq", "Test"]
-path = "/home/centos/SolitonDynamics.jl/"
+path = "/home/lorenzi/SolitonDynamics.jl/"
 uuid = "a462cd4a-e029-4138-aed7-681342f91064"
 version = "0.2.0"
 

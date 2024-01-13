@@ -9,60 +9,53 @@ function tiles(;
     equation = "Np",
     messages=false, 
     infos=false,
-    plot_finals=false
+    plot_finals=false,
+    gamma = 0.65
 )
-
-    startup_equation = "G1"
-
     if Threads.nthreads() == 1
         @warn "running in single thread mode!"
     end
-
     save_path = "results/"
-    gamma_list = [0.65]
-    for gamma in gamma_list
-        print("\n---> Using gamma: ", gamma)
-        @info "_____________________________"
-        @info "\tpreparing"
-        sd = load_parameters_alt(gamma_param = gamma; nosaves = false)
-        sd = filter(p -> (first(p) in [equation]), sd)
-        @info "\tRequired simulations: " keys(sd)
-        @info "\tsetting ground state"
-        @time prepare_for_collision!(sd, gamma; use_precomputed_gs = use_precomputed_gs)
 
-        # create the dictionary
-        if isfile(save_path * "tile_dict.jld2")
-            @info "Loading Tiles library..."
-            tile_dict = JLD2.load(save_path * "tile_dict.jld2")
-        else
-            @info "No Tiles library found! Saving an empty one..."
-            tile_dict = Dict()
-            JLD2.save(save_path * "tile_dict.jld2", tile_dict)
-        end
+    @info "==============================================="
+    @info "\t\tTiling " * string(equation)
+    @info @sprintf("\t\tUsing gamma: %.3f", gamma)
+    @info "==============================================="
+    
+    @info "\tLoading parameters..."
+    sd = load_parameters(gamma_param = gamma; nosaves = false)
+    sd = filter(p -> (first(p) in [equation]), sd)
+    @info "\tSetting ground states..."
+    @time prepare_for_collision!(sd, gamma; use_precomputed_gs = use_precomputed_gs)
 
-        name = equation
-        sim = sd[name]
-        print("\n")
-        @info "==============================================="
-        @info "\t\tTiling " * string(name)
-        @info "==============================================="
-        print("\n")
-        if haskey(tile_dict, hs(name, gamma)) && use_precomputed_tiles
-            @info "Already found tile for " name, gamma
-        else
-            tile = get_tiles(sim, 
-              name; 
-              tiles = number_of_tiles, 
-              messages = messages, 
-              infos = infos,
-              plot_finals = plot_finals
-              )
-            @info "==== Saving tiles"
-            push!(tile_dict, hs(name, gamma) => tile)
-            JLD2.save(save_path * "tile_dict.jld2", tile_dict)
-        end
+    @info "\tLoading tile library..."
+    # create the dictionary
+    if isfile(save_path * "tile_dict.jld2")
+        @info "\t\tFound library..."
+        tile_dict = JLD2.load(save_path * "tile_dict.jld2")
+    else
+        @info "\t\tNo library! Saving an empty one..."
+        tile_dict = Dict()
+        JLD2.save(save_path * "tile_dict.jld2", tile_dict)
     end
-    # view_all_tiles()
+    sim = sd[equation]
+    if haskey(tile_dict, hs(equation, gamma)) && use_precomputed_tiles
+        @info "Already found tile for " equation, gamma
+    else
+        @info "_________________________________________________\n\t Running tiling procedure"
+        tile = get_tiles(sim, 
+          equation; 
+          tiles = number_of_tiles, 
+          messages = messages, 
+          infos = infos,
+          plot_finals = plot_finals
+          )
+        @info "==== Saving tiles"
+        push!(tile_dict, hs(equation, gamma) => tile)
+        JLD2.save(save_path * "tile_dict.jld2", tile_dict)
+    end
+    @info "\tViewing all tiles..."
+    plot_tiles()
 end
 
 
@@ -110,7 +103,6 @@ function get_tiles(
         Threads.@threads for vx in eachindex(vel_list)
         # @showprogress "Computing all the velocities..." for vx in eachindex(vel_list)
             vv = vel_list[vx]
-            messages && @printf("===Computing velocity [vx=%i/%i]\n", vx, tiles)
             messages && @info @sprintf("Free memory = %.3f GiB", Sys.free_memory() / 2^30)
             collapse_occured = false
             for (bx, bb) in enumerate(bar_list)
@@ -143,7 +135,7 @@ function get_tiles(
                               show = false,
                               title = @sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles)
                           )
-                          savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
+                          savefig(pp, "media/checks/final_$(name)_$(vx)_$(bx)_$(tiles).pdf")
                           qq = plot_axial_heatmap(
                               sol.u,
                               sim.t,
@@ -151,7 +143,7 @@ function get_tiles(
                               show = false,
                               title = @sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles)
                           )
-                          savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
+                          savefig(qq, "media/checks/heatmap_$(name)_$(vx)_$(bx)_$(tiles).pdf")
                       end
                   catch err
                       if isa(err, NpseCollapse) || isa(err, Gpe3DCollapse)
@@ -316,7 +308,7 @@ function get_tiles(
     return tran
 end
 
-function view_all_tiles()
+function plot_tiles()
     # pyplot(size=(300, 220))
     # pyplot(size=(300, 260))
     # backend(:pyplot)

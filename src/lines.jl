@@ -11,7 +11,7 @@ function lines(gamma_list = [0.65]; use_precomputed_lines = false)
     for gamma in gamma_list
         @info "==== Using gamma: " gamma
 
-        sd = load_parameters_alt(
+        sd = load_parameters(
             gamma_param = gamma;
             eqs = ["N", "Np", "G3", "G1"],
             nosaves = true,

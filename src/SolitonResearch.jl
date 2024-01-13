@@ -11,6 +11,7 @@ using OrderedCollections
 using Printf
 using LaTeXStrings
 using ProgressBars, ProgressMeter, Colors, ColorSchemes
+using DelimitedFiles 
 
 include("init/_plot_settings.jl")
 include("plotting/plot_axial_evolution.jl")
@@ -22,17 +23,13 @@ include("solitons.jl")
 include("lines.jl")
 include("tiles.jl")
 include("chempot.jl")
-include("auxiliary_scripts/aux_collapse.jl")
-include("auxiliary_scripts/aux_gs.jl")
-include("auxiliary_scripts/aux_collision.jl")
-include("auxiliary_scripts/aux_sigma2.jl")
 
 @exportAll()
 
 # @setup_workload begin
 #   @compile_workload begin
 #     @info "entering compile workload"
-#     sd = load_parameters_alt()
+#     sd = load_parameters()
 #     # maybe too much
 #     # prepare_for_collision!(sd, 0.65)
 #   end
