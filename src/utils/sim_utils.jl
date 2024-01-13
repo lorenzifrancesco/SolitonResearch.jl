@@ -12,9 +12,9 @@ function prepare_for_collision!(sd, gamma; use_precomputed_gs=false, info=false)
   end
   for (name, sim) in sd
     if haskey(gs_dict, hs(name, gamma)) && use_precomputed_gs
-      @info "Found in library item " (name, gamma)
+      @info @sprintf("Found in library item (%s, %3.2f)", name, gamma)
     else
-      @info "Computing item..." (name, gamma)
+      @info @sprintf("Computing item (%s, %3.2f)...", name, gamma)
       uu = get_ground_state(sim; info=info)
       push!(gs_dict, hs(name, gamma) => uu)
       JLD2.save(save_path * "gs_dict.jld2", gs_dict)

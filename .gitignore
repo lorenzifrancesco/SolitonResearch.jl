@@ -5,3 +5,4 @@ human_readable
 .vscode
 *.pdf
 *.jld2
+log*
