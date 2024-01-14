@@ -6,7 +6,7 @@ using PrecompileTools
 using SolitonDynamics, CUDA, FFTW, OrdinaryDiffEq
 using Plots
 import JLD2, CSV
-using Tables
+using Tables, DataFrames
 using Interpolations
 using OrderedCollections
 using Printf
