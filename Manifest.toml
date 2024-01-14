@@ -432,9 +432,9 @@ version = "2.36.1"
 
 [[deps.DiffEqGPU]]
 deps = ["Adapt", "ChainRulesCore", "DiffEqBase", "Distributed", "DocStringExtensions", "ForwardDiff", "KernelAbstractions", "LinearAlgebra", "LinearSolve", "MuladdMacro", "Parameters", "Random", "RecursiveArrayTools", "Requires", "SciMLBase", "Setfield", "SimpleDiffEq", "StaticArrays", "TOML", "ZygoteRules"]
-git-tree-sha1 = "0ee46cab53346113b307b23edd7001a3029fad6f"
+git-tree-sha1 = "642a9a480757ddfa1655340608db97f6d5e98f71"
 uuid = "071ae1c0-96b5-11e9-1965-c90190d839ea"
-version = "3.3.0"
+version = "3.4.0"
 
     [deps.DiffEqGPU.extensions]
     AMDGPUExt = ["AMDGPU"]
@@ -1786,7 +1786,7 @@ uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
 
 [[deps.SolitonDynamics]]
 deps = ["Adapt", "BoundaryValueDiffEq", "CUDA", "DiffEqCallbacks", "DiffEqGPU", "Distributed", "ExportAll", "FFTW", "FileIO", "ForwardDiff", "Interpolations", "IntervalArithmetic", "IntervalRootFinding", "JLD2", "LazyArrays", "LinearAlgebra", "LinearSolve", "LoopVectorization", "NonlinearSolve", "OrdinaryDiffEq", "Parameters", "PrecompileTools", "ProgressBars", "ProgressMeter", "RecursiveArrayTools", "Reexport", "SciMLNLSolve", "StaticArrays", "SteadyStateDiffEq", "Test"]
-path = "/home/lorenzi/SolitonDynamics.jl/"
+path = "/home/centos/SolitonDynamics.jl/"
 uuid = "a462cd4a-e029-4138-aed7-681342f91064"
 version = "0.2.0"
 
