@@ -56,6 +56,7 @@ function imprint_vel_set_bar!(
   bw::Float64=0.5,
   dt_set::Float64=0.01,
   time_step_limit::Int64=5000,
+  save_each::Bool = false
 )
 
   @unpack_Sim sim
@@ -77,18 +78,29 @@ function imprint_vel_set_bar!(
   else
     tf = 2 * x0 / vv
   end
-  t = LinRange(ti, tf, Nt)
   time_steps = Int(floor((tf - ti) / dt_set))
+  # @warn tf
+  # @warn dt_set
+  # @warn time_steps
   if time_steps > time_step_limit
     time_steps = time_step_limit
     dt = (tf - ti) / time_steps
     @warn @sprintf("t_steps > %i, clipped dt=%0.4f", time_step_limit, dt)
+  else
+    dt = dt_set 
   end
+  if save_each
+    Nt = time_steps
+  else
+    Nt = 2
+  end
+  t = LinRange(ti, tf, Nt)
   xspace!(psi_0, sim)
   psi_0 .= circshift(psi_0, shift)
   @. psi_0 = abs(psi_0) * exp(-im * (x) * vv)
   kspace!(psi_0, sim)
   @pack_Sim! sim
+  @warn sim.t
   nothing
 end
 

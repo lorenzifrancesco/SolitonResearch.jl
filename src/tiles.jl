@@ -100,9 +100,9 @@ function get_tiles(
     counter = 0
     iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
 
-    print("___________________________________________________________________\n")
+    print("____________________________________________________________________\n")
     print("|tid| num|   bx|   vx|     dt|   T %|1-T-R %| collapse|   iter time|\n")
-    print("___________________________________________________________________")
+    print("____________________________________________________________________")
     full_time = @elapsed begin
         Threads.@threads for vx in eachindex(vel_list)
         # @showprogress "Computing all the velocities..." for vx in eachindex(vel_list)
