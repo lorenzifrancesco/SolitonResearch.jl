@@ -126,7 +126,7 @@ function get_tiles(
                 # messages && print("\n..."*tile_mess) 
                 if !collapse_occured
                   try
-                      this_iteration_time += @elapsed sol = runsim(sim; info = infos)
+                      this_iteration_time = @elapsed sol = runsim(sim; info = infos)
                       avg_iteration_time += this_iteration_time
                       # FIXME avoid NPSE+ memory filling problem
                       GC.gc()
