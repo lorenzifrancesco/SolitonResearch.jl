@@ -7,3 +7,4 @@ human_readable
 *.jld2
 log*
 *.log
+diagnostic/*.csv

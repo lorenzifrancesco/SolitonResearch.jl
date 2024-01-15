@@ -16,7 +16,7 @@ function load_parameters(;
   maxiters_3d=1e10,
   initial_width=10,
   abstol_all=1e-3,
-  collapse_threshold_set = 0.3
+  collapse_threshold_set = 0.1
 )
   sim_dictionary::OrderedDict{String,Sim} = OrderedDict()
 

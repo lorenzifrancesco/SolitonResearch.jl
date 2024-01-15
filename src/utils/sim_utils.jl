@@ -79,9 +79,6 @@ function imprint_vel_set_bar!(
     tf = 2 * x0 / vv
   end
   time_steps = Int(floor((tf - ti) / dt_set))
-  # @warn tf
-  # @warn dt_set
-  # @warn time_steps
   if time_steps > time_step_limit
     time_steps = time_step_limit
     dt = (tf - ti) / time_steps
