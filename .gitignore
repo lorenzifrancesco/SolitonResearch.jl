@@ -6,3 +6,4 @@ human_readable
 *.pdf
 *.jld2
 log*
+*.log
