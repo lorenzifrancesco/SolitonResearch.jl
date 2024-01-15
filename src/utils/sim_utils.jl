@@ -31,7 +31,6 @@ function prepare_for_collision!(sd, gamma; use_precomputed_gs=false, info=false)
       @pack_Sim! sim
     else
       @unpack_Sim sim
-      x0 = L[1] / 4
       iswitch = 1
       x = X[1] |> real
       y = X[2] |> real
@@ -62,12 +61,16 @@ function imprint_vel_set_bar!(
   @unpack_Sim sim
   x = X[1] |> real
   @. V0 = bb * exp(-(x / bw)^2 / 2) # central barrier
+  @info @sprintf("barrier width         bw=%8.4f", bw)
+  @info @sprintf("barrier crossing time t*=%8.4f", bw/vv)
+  @info @sprintf("Nt in crossing period Nt=%8.4f", bw/vv/dt_set)
   x0 = L[1] / 4
   if sim.equation == NPSE_plus
     x0 = L[1] / 8
   else
     x0 = L[1] / 4
   end
+  @info x0
   shift = Int(x0 / L[1] * N[1])
   if vv == 0.0
     tf = 2.0
