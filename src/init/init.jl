@@ -15,7 +15,8 @@ function load_parameters(;
   maxiters_1d=1e10,
   maxiters_3d=1e10,
   initial_width=10,
-  abstol_all=1e-3
+  abstol_all=1e-3,
+  collapse_threshold_set = 0.3
 )
   sim_dictionary::OrderedDict{String,Sim} = OrderedDict()
 
@@ -40,7 +41,7 @@ function load_parameters(;
   dV = volume_element(L, N)
   flags = FFTW.EXHAUSTIVE
   alg = BS3()
-
+  collapse_threshold = collapse_threshold_set
   # will be overwritten
   if nosaves
     Nt = 2
@@ -102,6 +103,7 @@ function load_parameters(;
   alg = BS3()
 
   equation = NPSE
+  collapse_threshold = collapse_threshold_set
   # interaction parameter
   if gamma_param > 2 / 3
     @warn "we should expect NPSE collapse"
@@ -156,6 +158,7 @@ function load_parameters(;
   alg = BS3()
 
   equation = NPSE_plus
+  collapse_threshold = collapse_threshold_set
   # interaction parameter
   if gamma_param > 2 / 3
     @warn "we should expect NPSE collapse"
@@ -203,6 +206,7 @@ function load_parameters(;
   # alg = BS3()
   # # we can augment the accuracy
 
+  # collapse_threshold = collapse_threshold_set
 
   # x = Array(X[1])
   # y = Array(X[2])
