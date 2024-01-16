@@ -3,7 +3,7 @@ Load the simulation dictionary.
 Input: directory of input files
 Output: dictionary with selected 
 """
-function load_parameters(
+function load_simulation_dictionary(
   input_dir = "input/",
   eqs = [GPE_1D, NPSE, NPSE_plus],
 )
@@ -24,7 +24,6 @@ function load_simulation(input_dir, eq::EquationType;
   idx_domain=1, 
   idx_nonlin=1,
   idx_precis=1
-  
   )
   domain_df=CSV.read(input_dir*"domain.csv", DataFrame)
   nonlin_df=CSV.read(input_dir*"nonlinearity.csv", DataFrame)
@@ -46,12 +45,14 @@ function load_simulation(input_dir, eq::EquationType;
   sim.solver = SplitStep
   # interaction parameter
   gamma_param = nonlin_df.gamma[idx_nonlin]
+  sim.g = gamma2g(gamma_param, sim.equation)
   if eq == GPE_3D
-    sim.g = - gamma_param * (4 * pi)
+    check = - gamma_param * (4 * pi)
   else
-    sim.g = -2 * gamma_param
+    check = -2 * gamma_param
   end
 
+  @assert check == sim.g
   if eq in [NPSE, NPSE_plus]
     if gamma_param > 2 / 3
       @warn "we should expect NPSE collapse"
