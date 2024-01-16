@@ -96,6 +96,8 @@ function load_simulation(input_dir, eq::EquationType;
     @. sim.psi_0 = exp(-(x/initial_width)^2)
     sim.psi_0 = sim.psi_0 / sqrt(ns(sim.psi_0, sim))
     sim.maxiters = domain_df.max_iters[idx_domain]
-  end  
+  end 
+  kspace!(sim.psi_0, sim)
+  @assert isapprox(nsk(sim.psi_0, sim), 1.0, rtol=1.0e-9)
   return sim
 end
