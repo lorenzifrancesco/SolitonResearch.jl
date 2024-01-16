@@ -109,7 +109,7 @@ function imprint_vel_set_bar(
   vv::Float64=0.0,
   bb::Float64=0.0,
   bw::Float64=0.5,
-  dt_set::Float64=0.001,
+  dt_set::Float64=0.01,
   time_step_limit::Int64=5000,
 )
   @warn "Deepcopy is deprecated"
