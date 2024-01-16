@@ -117,8 +117,10 @@ function plot_pavement(
     left_margin = 0 * Plots.mm,
     right_margin = 0 * Plots.mm,
   )
+  plot!(ht2, vaxis, vaxis .^2)
   savefig(ht2, "media/tiles_" * string(ihs(k)) * "_ht.pdf")
-  v, mask = process_tiles(v)
+  # v, mask = process_tiles(v)
+  mask = v
   ht = contour(vaxis, baxis, v, clabels = true, xlabel = L"v", ylabel = L"b")
   contour!(
       ht,
@@ -130,7 +132,13 @@ function plot_pavement(
       linestyle = :dot,
       linewidth = 1.8,
   )
-  savefig(ht, "media/tiles_" * string(ihs(k)) * "_ct.pdf")
+  alpha = 1.0
+  plot!(ht, vaxis, vaxis.^2 * alpha)
+  if k == "0000"
+    savefig(ht, "media/tiles_test_ct.pdf")
+  else
+    savefig(ht, "media/tiles_" * string(ihs(k)) * "_ct.pdf")
+  end
   nothing
 end
 
