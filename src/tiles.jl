@@ -78,7 +78,9 @@ function get_tiles(
     bar_list = LinRange(0, max_bar, tiles)
     tran = Array{Float64,2}(undef, (tiles, tiles))
     refl = Array{Float64,2}(undef, (tiles, tiles))
-
+    #initialize negative values
+    tran = -0.1*ones((tiles, tiles))
+    refl = -0.1*ones((tiles, tiles))
     @info "Filling sim grid..."
     sgrid = Array{Sim,2}(undef, (tiles, tiles))
     archetype = sim
