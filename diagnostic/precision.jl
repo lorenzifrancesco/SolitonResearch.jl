@@ -1,16 +1,16 @@
 using SolitonResearch, SolitonDynamics
 using Plots, Printf, DataFrames, CSV
 gr()
-
+  
 begin
   N_samples = 1
   if N_samples > 1
     dt_list = exp(1) .^ LinRange(log(0.1), log(0.05), N_samples)
   else
-    dt_list = [0.005]
+    dt_list = [0.0065]
   end
-  vv = 1.0
-  bb = 0.53
+  vv = 48/50
+  bb = 25/50
   inner_product = zeros(N_samples)
   exec_time = zeros(N_samples)
 
@@ -50,7 +50,7 @@ function get_final(vv, bb, dt_set)
     ## prepare in gs
     prepare_for_collision!(sd, 0.65, use_precomputed_gs=true)
     ## select the NPSE+
-    sim = sd["Np"]
+    sim = sd["G1"]
     ## imprint velocity set barrier
   
     # vel = 0.1
