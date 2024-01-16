@@ -26,6 +26,7 @@ include("tiles.jl")
 include("chempot.jl")
 
 @exportAll()
+export GPE_1D, NPSE, NPSE_plus, GPE_3D
 
 # @setup_workload begin
 #   @compile_workload begin

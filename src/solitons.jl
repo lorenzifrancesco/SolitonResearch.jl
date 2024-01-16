@@ -1,3 +1,10 @@
+function get_solitons(
+  sim::Simulation,
+  )
+  
+  return
+end
+
 function solitons(;
   plus::Bool=false,
   use_precomputed::Bool=true,
@@ -7,9 +14,11 @@ function solitons(;
   info::Bool=false,
 )
   # pyplot(size=(359, 220))
-  sd = load_parameters()
+  sd = load_parameters("input/")
 
-  @assert all([s.iswitch for s in values(sd)] .== -im)
+  for s in values(sd)
+    s.iswitch = -im
+  end
   save_path = "results/"
 
   if isfile(save_path * "gs_dict.jld2")
@@ -75,47 +84,6 @@ function solitons(;
       ls=:dashdot,
     )
     JLD2.save(join([save_path, "gs_dict.jld2"]), gs_dict)
-
-    # # == CQGPE =======================================================
-    # time_requirement[2] = @elapsed begin
-    #   if take_advantage
-    #     sim_cc.psi_0 = gpe_1d
-    #   end
-    #   if haskey(gs_dict, hs("CQ", gamma_param))
-    #     if use_precomputed
-    #       @info "\t CQ:    |  x  "
-    #     else
-    #       @info "\t CQ:  x |     (deleting)"
-    #       delete!(gs_dict, hs("CQ", gamma_param))
-    #       try
-    #         sol = runsim(sim_cc; info=info)
-    #         @info "total imaginary time $(sol.cnt * sim_cc.dt)"
-    #       catch err
-    #         if isa(err, Gpe3DCollapse)
-    #           @warn "Cubic Quintic collapsed"
-    #         else
-    #           throw(err)
-    #         end
-    #       end
-    #       push!(gs_dict, hs("CQ", gamma_param) => sol.u)
-    #     end
-    #   else
-    #     @info "\t CQ:  x |     "
-    #     try
-    #       sol = runsim(sim_cc; info=info)
-    #     catch err
-    #       if isa(err, Gpe3DCollapse)
-    #         @warn "Cubic Quintic collapsed"
-    #       else
-    #         throw(err)
-    #       end
-    #     end
-    #     push!(gs_dict, hs("CQ", gamma_param) => sol.u)
-    #   end
-    # end
-    # cc = gs_dict[hs("CQ", gamma_param)]
-    # # plot_final_density!(p, [cc], sim_cc; label="CQ-GPE", color=:blue, ls=:dashdot)
-    # JLD2.save(join([save_path, "gs_dict.jld2"]), gs_dict)
 
     # == NPSE =======================================================
     time_requirement[3] = @elapsed begin
