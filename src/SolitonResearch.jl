@@ -3,7 +3,8 @@ module SolitonResearch
 using ExportAll
 using PrecompileTools
 
-using SolitonDynamics, CUDA, FFTW, OrdinaryDiffEq
+using SolitonDynamics
+import CUDA: CuArray 
 using Plots
 import JLD2, CSV
 using Tables, DataFrames
@@ -32,7 +33,6 @@ export GPE_1D, NPSE, NPSE_plus, GPE_3D
 #   @compile_workload begin
 #     @info "entering compile workload"
 #     sd = load_parameters()
-#     # maybe too much
 #     # prepare_for_collision!(sd, 0.65)
 #   end
 # end

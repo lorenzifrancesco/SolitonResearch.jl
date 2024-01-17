@@ -3,16 +3,15 @@ Load the simulation dictionary.
 Input: directory of input files
 Output: dictionary with selected 
 """
-function load_simulation_dictionary(
+function load_simulation_list(
   input_dir = "input/",
   eqs = [GPE_1D, NPSE, NPSE_plus],
 )
-  sim_dictionary::OrderedDict{EquationType,Sim} = OrderedDict()
+  sim_dictionary::Array{Sim} = []
   for eq in eqs
-    push!(sim_dictionary, eq => load_simulation(input_dir, eq))
+    push!(sim_dictionary, load_simulation(input_dir, eq))
   end
-  ## TODO Sorting not working 
-  sort(sim_dictionary, lt=SolitonDynamics.isless)  
+  sort(sim_dictionary, lt=SolitonDynamics.isless)
   return sim_dictionary
 end
 
@@ -60,7 +59,7 @@ function load_simulation(input_dir, eq::EquationType;
     sim.sigma2 = init_sigma2(sim.g)
   end
   sim.dV = volume_element(L, N)
-  sim.flags = FFTW.EXHAUSTIVE
+  # sim.flags = FFTW.EXHAUSTIVE
   sim.collapse_threshold = nonlin_df.collapse_threshold[idx_nonlin]
   sim.abstol = precis_df.abstol[idx_precis]
   if eq == GPE_3D

@@ -2,13 +2,18 @@
 Iterate the soliton finding routine over a set of equations
 """
 function fill_solitons(;
-  eqs = [GPE_1D, NPSE, NPSE_plus])
+  eqs = [GPE_1D])
 
-  sim_dict = load_simulation_dictionary()
-
-  for (k, sim) in sim_dict
-    if k in eqs
-      get_soliton(sim)
+  # sim_dict = load_simulation_list()
+  sim_dict = [load_simulation("input/", GPE_1D)]
+  # sim = sim_dict[1]
+  # xspace!(sim.psi_0, sim)
+  # kspace!(sim.psi_0, sim)
+  # runsim(sim, info=true)
+  @info "survived"
+  for sim in sim_dict
+    if sim.equation in eqs
+      get_soliton(sim, use_precomputed=false)
     end
   end
   return
@@ -37,8 +42,9 @@ function get_soliton(
       else
         delete!(gs_dict, hs(eq.name, gamma_param))
         sol = runsim(sim; info=info)
+        @info "running"
         info && @info "total imaginary time $(sol.cnt * sim.dt)"
-        push!(gs_dict, hs(eq.name, gamma_param) => [sim, sol.u])
+        push!(gs_dict, hs(eq.name, gamma_param) => sol.u)
       end
     else
       try
@@ -52,7 +58,7 @@ function get_soliton(
           throw(err)
         end
       end
-      push!(gs_dict, hs(eq.name, gamma_param) => [sim, sol.u])
+      push!(gs_dict, hs(eq.name, gamma_param) => sol.u)
     end
   end
   info && @info @sprintf("Ground state time: %8.4fs", time_requirement)
@@ -154,7 +160,7 @@ function load_soliton_dictionary(;
     gs_dict = JLD2.load(save_path * "gs_dict.jld2")
     info && @info "Found GS dictionary: " gs_dict
   else
-    gs_dict = Dict{EquationType, Tuple{Simulation, AbstractArray}}()
+    gs_dict = Dict{EquationType, Tuple{AbstractArray}}()
     JLD2.save(join([save_path, "gs_dict.jld2"]), gs_dict)
   end
   return gs_dict
