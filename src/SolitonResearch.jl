@@ -1,10 +1,8 @@
 module SolitonResearch
 using Distributed
 
-mess = addprocs(6-nprocs())
-@everywhere begin
-  using ExportAll
-  using PrecompileTools
+using ExportAll
+using PrecompileTools
 
 using SolitonDynamics
 import CUDA: CuArray 
