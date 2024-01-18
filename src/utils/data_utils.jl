@@ -219,3 +219,13 @@ function process_tiles(tt)
     end
     return tt, mask
 end
+
+function csv2color(file_name;
+  path="results/")
+  pyplot()
+  vals = Tables.matrix(CSV.read(path*file_name*".csv", DataFrame))
+  (vx, bx) = get_pavement_axes(vals)
+  p = heatmap(vx, bx, vals, title=file_name, interpolate=false)
+  savefig(p, "media/colorized_csv"*file_name*".pdf")
+  nothing
+end
