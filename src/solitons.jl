@@ -1,21 +1,19 @@
 """
-Iterate the soliton finding routine over a set of equations
+Iterate the soliton finding routine over a set of equations.
+Use precomputed values when possible
 """
 function fill_solitons(;
-  eqs = [GPE_1D])
+  eqs = [GPE_1D, NPSE, NPSE_plus])
 
-  # sim_dict = load_simulation_list()
-  sim_dict = [load_simulation("input/", GPE_1D)]
+  sl = load_simulation_list()
+  # sim_dict = [load_simulation("input/", GPE_1D)]
   # sim = sim_dict[1]
   # xspace!(sim.psi_0, sim)
   # kspace!(sim.psi_0, sim)
   # runsim(sim, info=true)
-  @info "survived"
-  for sim in sim_dict
-    if sim.equation in eqs
-      get_soliton(sim, use_precomputed=false)
-    end
-  end
+  # @info "survived"
+  sl = filter(p -> (p.equation in eqs), sl)
+  get_soliton.(sl, use_precomputed=true)
   return
 end
 
@@ -24,7 +22,7 @@ end
 Compute the solitonic ground state for the given Simulation.
 Compare results with ground state dictionary, and eventually use 
 precomputed results. 
-"""
+Also print the ground state in human readable CSV file"""
 function get_soliton(
   sim::Sim;
   use_precomputed::Bool=true,
@@ -65,7 +63,7 @@ function get_soliton(
   solution = gs_dict[hs(eq.name, gamma_param)]
 
   JLD2.save(join([save_path, "gs_dict.jld2"]), gs_dict)
-  human_readable_gs()
+  human_readable_soliton()
   nothing
 end
 
@@ -83,14 +81,14 @@ function plot_solitons(;
   info::Bool=false)
 
   soliton_dict = load_soliton_dictionary(info=info)
-  human_readable_gs()
+  human_readable_soliton()
 
   # pyplot(size=(359, 220))
   p = plot()
   @assert is_gamma_uniform(soliton_dict)
   gamma = ihs(first(soliton_dict)[1])[2]
   for (k, v) in soliton_dict
-    sim::Simulation = v[1]
+    sim::Simulation = v[1] # TODO find an unique identifier for a Sim: it doesn't need to keep the FFTW plans inside
     solution::AbstractArray = v[2]
     plot_final_density!(
       p,
@@ -164,7 +162,7 @@ function load_soliton_dictionary(;
     JLD2.save(join([save_path, "gs_dict.jld2"]), gs_dict)
   end
   return gs_dict
-end 
+end
 
 
 """

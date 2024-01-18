@@ -1,5 +1,10 @@
 
-function prepare_for_collision!(sd, gamma; use_precomputed_gs=false, info=false)
+function prepare_for_collision!(sim, gamma; 
+  use_precomputed_gs=true, 
+  info=false)
+
+  # TODO maybe remove the ground state dictionary, 
+  # or make it better with SimSpecsfalse
   @info "______________________________"
   save_path = "results/"
   if isfile(save_path * "gs_dict.jld2")
@@ -10,40 +15,40 @@ function prepare_for_collision!(sd, gamma; use_precomputed_gs=false, info=false)
     gs_dict = Dict()
     JLD2.save(save_path * "gs_dict.jld2", gs_dict)
   end
-  for (name, sim) in sd
-    if haskey(gs_dict, hs(name, gamma)) && use_precomputed_gs
-      @info @sprintf("Found in library item (%s, %3.2f)", name, gamma)
-    else
-      @info @sprintf("Computing item (%s, %3.2f)...", name, gamma)
-      uu = get_ground_state(sim; info=info)
-      push!(gs_dict, hs(name, gamma) => uu)
-      JLD2.save(save_path * "gs_dict.jld2", gs_dict)
-    end
-    uu = JLD2.load(save_path * "gs_dict.jld2", hs(name, gamma))
-    # write the initial state into sim
-    if length(sim.N) == 1
-      @unpack_Sim sim
-      iswitch = 1
-      x = X[1]
-      psi_0 = uu
-      @assert isapprox(nsk(psi_0, sim), 1.0, atol=1e-9)
-      # time_steps = Int(ceil((tf - ti) / dt))
-      @pack_Sim! sim
-    else
-      @unpack_Sim sim
-      iswitch = 1
-      x = X[1] |> real
-      y = X[2] |> real
-      z = X[3] |> real
-      psi_0 = CuArray(uu)
-      @assert isapprox(nsk(psi_0, sim), 1.0, atol=1e-9)
-      time_steps = Int(ceil((tf - ti) / dt))
-      @pack_Sim! sim
-    end
-    @info @sprintf("Done %s", name)
+
+  name = sim.equation.name
+  if haskey(gs_dict, hs(name, gamma)) && use_precomputed_gs
+    @info @sprintf("Found in library item (%s, %3.2f)", name, gamma)
+  else
+    @info @sprintf("Computing item (%s, %3.2f)...", name, gamma)
+    uu = get_ground_state(sim; info=info)
+    push!(gs_dict, hs(name, gamma) => uu)
+    JLD2.save(save_path * "gs_dict.jld2", gs_dict)
   end
+  uu = JLD2.load(save_path * "gs_dict.jld2", hs(name, gamma))
+  # write the initial state into sim
+  if length(sim.N) == 1
+    @unpack_Sim sim
+    iswitch = 1
+    x = X[1]
+    psi_0 = uu
+    @assert isapprox(nsk(psi_0, sim), 1.0, atol=1e-9)
+    # time_steps = Int(ceil((tf - ti) / dt))
+    @pack_Sim! sim
+  else
+    @unpack_Sim sim
+    iswitch = 1
+    x = X[1] |> real
+    y = X[2] |> real
+    z = X[3] |> real
+    psi_0 = CuArray(uu)
+    @assert isapprox(nsk(psi_0, sim), 1.0, atol=1e-9)
+    time_steps = Int(ceil((tf - ti) / dt))
+    @pack_Sim! sim
+  end
+  @info @sprintf("Done %s", name)
   @info "______________________________"
-  return sd
+  nothing
 end
 
 ```
