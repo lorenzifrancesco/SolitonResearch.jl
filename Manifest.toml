@@ -432,9 +432,9 @@ version = "2.36.1"
 
 [[deps.DiffEqGPU]]
 deps = ["Adapt", "ChainRulesCore", "DiffEqBase", "Distributed", "DocStringExtensions", "ForwardDiff", "KernelAbstractions", "LinearAlgebra", "LinearSolve", "MuladdMacro", "Parameters", "Random", "RecursiveArrayTools", "Requires", "SciMLBase", "Setfield", "SimpleDiffEq", "StaticArrays", "TOML", "ZygoteRules"]
-git-tree-sha1 = "642a9a480757ddfa1655340608db97f6d5e98f71"
+git-tree-sha1 = "7a714b856fe00d6194774bc38e387375f06963fe"
 uuid = "071ae1c0-96b5-11e9-1965-c90190d839ea"
-version = "3.4.0"
+version = "3.4.1"
 
     [deps.DiffEqGPU.extensions]
     AMDGPUExt = ["AMDGPU"]
@@ -1748,9 +1748,9 @@ version = "1.1.0"
 
 [[deps.SimpleDiffEq]]
 deps = ["DiffEqBase", "LinearAlgebra", "MuladdMacro", "Parameters", "RecursiveArrayTools", "Reexport", "StaticArrays"]
-git-tree-sha1 = "066ff242470b1a699c633448d04f53b4cc347a95"
+git-tree-sha1 = "afd610e15259e1c42e6b578d306a1c0cdf386533"
 uuid = "05bca326-078c-5bf0-a5bf-ce7c7982d7fd"
-version = "1.11.0"
+version = "1.11.1"
 
 [[deps.SimpleNonlinearSolve]]
 deps = ["ADTypes", "ArrayInterface", "ConcreteStructs", "DiffEqBase", "FiniteDiff", "ForwardDiff", "LinearAlgebra", "MaybeInplace", "PrecompileTools", "Reexport", "SciMLBase", "StaticArraysCore"]
@@ -1786,7 +1786,7 @@ uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
 
 [[deps.SolitonDynamics]]
 deps = ["Adapt", "BoundaryValueDiffEq", "CUDA", "DiffEqCallbacks", "DiffEqGPU", "Distributed", "ExportAll", "FFTW", "FileIO", "ForwardDiff", "Interpolations", "IntervalArithmetic", "IntervalRootFinding", "JLD2", "LazyArrays", "LinearAlgebra", "LinearSolve", "LoopVectorization", "NonlinearSolve", "OrdinaryDiffEq", "Parameters", "PrecompileTools", "ProgressBars", "ProgressMeter", "RecursiveArrayTools", "Reexport", "SciMLNLSolve", "StaticArrays", "SteadyStateDiffEq", "Test"]
-path = "/home/centos/SolitonDynamics.jl/"
+path = "/home/lorenzi/SolitonDynamics.jl/"
 uuid = "a462cd4a-e029-4138-aed7-681342f91064"
 version = "0.2.0"
 
@@ -2269,9 +2269,9 @@ version = "1.5.5+0"
 
 [[deps.ZygoteRules]]
 deps = ["ChainRulesCore", "MacroTools"]
-git-tree-sha1 = "9d749cd449fb448aeca4feee9a2f4186dbb5d184"
+git-tree-sha1 = "27798139afc0a2afa7b1824c206d5e87ea587a00"
 uuid = "700de1a5-db45-46bc-99cf-38207098b444"
-version = "0.2.4"
+version = "0.2.5"
 
 [[deps.eudev_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "gperf_jll"]

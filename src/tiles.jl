@@ -19,19 +19,23 @@ function fill_tiles(;
   end
   sl = load_simulation_list()
   sl = filter(p -> (p.equation in eqs), sl)
-  get_tile.(sl, tiles=number_of_tiles, use_precomputed=false)
+  get_tile.(sl,
+    tiles=number_of_tiles,
+    use_precomputed=false,
+    return_maximum=return_maximum,
+    plot_finals=plot_finals)
   plot_tiles()
 end
 
 """
 Get the tiles, check if they are precomputed 
 (TODO get partially precomputed tile grid)
-
 """
 function get_tile(
   sim::Sim{1,Array{Complex{Float64}}};
   use_precomputed=false,
   name::String="noname",
+  return_maximum=false,
   tiles=100,
   plot_finals=false,
   messages=true,
@@ -54,9 +58,11 @@ function get_tile(
   bar_list = LinRange(0, max_bar, tiles)
   tran = Array{Float64,2}(undef, (tiles, tiles))
   refl = Array{Float64,2}(undef, (tiles, tiles))
+  maxi = Array{Float64,2}(undef, (tiles, tiles))
   #initialize negative values
   tran = -0.1 * ones((tiles, tiles))
   refl = -0.1 * ones((tiles, tiles))
+  maxi = -0.1 * ones((tiles, tiles))
 
   sim.iswitch = 1
   tile_dict = load_tile_dictionary()
@@ -69,22 +75,14 @@ function get_tile(
     @info "Filling sim grid..."
     sgrid = Array{Sim,2}(undef, (tiles, tiles))
     archetype = sim
-    sgrid[1, 1] = archetype
-    @time begin
-      for (vx, vv) in enumerate(vel_list)
-        for (bx, bb) in enumerate(bar_list)
-          sgrid[bx, vx] = imprint_vel_set_bar(archetype; vv=vv, bb=bb)
-        end
-      end
-    end
-    @info "Done filling."
     # all sims have the same x
-    mask_refl = map(xx -> xx > 0, sgrid[1, 1].X[1] |> real)
-    mask_tran = map(xx -> xx < 0, sgrid[1, 1].X[1] |> real)
+    mask_refl = map(xx -> xx > 0, archetype.X[1] |> real)
+    mask_tran = map(xx -> xx < 0, archetype.X[1] |> real)
 
     this_iteration_time = 0.0
     avg_iteration_time = 0.0
     counter = 0
+    maxim = -1.0
     iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
 
     print("____________________________________________________________________\n")
@@ -97,11 +95,11 @@ function get_tile(
         # messages && print("\t"*@sprintf("Free memory = %.3f GiB", Sys.free_memory() / 2^30))
         collapse_occured = false
         for (bx, bb) in enumerate(bar_list)
-          sim = sgrid[bx, vx]
+          loop_sim = imprint_vel_set_bar(archetype; vv=vv, bb=bb)
           if bx > 2 && isnan(tran[bx-1, vx]) && isnan(tran[bx-2, vx])
             # messages && @printf("\n Collapse shortcut!")
             collapse_occured = true
-            this_iteration_time = 0.0 
+            this_iteration_time = 0.0
           end
           sol = nothing
           tile_mess = @sprintf("| %2i|%4i|  %3i|  %3i|  %.3f|",
@@ -109,12 +107,12 @@ function get_tile(
             bx + tiles * (vx - 1),
             vx,
             bx,
-            sim.dt
+            loop_sim.dt
           )
           # messages && print("\n..."*tile_mess) 
           if !collapse_occured
             try
-              this_iteration_time = @elapsed sol = runsim(sim; info=infos)
+              this_iteration_time = @elapsed (sol, maxim) = runsim(loop_sim; info=infos, return_maximum=return_maximum)
               avg_iteration_time += this_iteration_time
               # FIXME avoid NPSE+ memory filling problem
               GC.gc()
@@ -122,15 +120,15 @@ function get_tile(
               if plot_finals
                 pp = plot_final_density(
                   sol.u,
-                  sim;
+                  loop_sim;
                   show=false,
                   title=@sprintf("[vx=%3i, bx=%3i]/%3i", vx, bx, tiles)
                 )
                 savefig(pp, "media/checks/final_$(name)_$(vx)_$(bx)_$(tiles).pdf")
                 qq = plot_axial_heatmap(
                   sol.u,
-                  sim.t,
-                  sim;
+                  loop_sim.t,
+                  loop_sim;
                   show=false,
                   title=@sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles)
                 )
@@ -144,15 +142,17 @@ function get_tile(
               end
             end
           end
-          @assert sim.manual == true
+          @assert loop_sim.manual == true
           if !collapse_occured
             final = sol.u[end]
             # @info "Run complete, computing transmission..."
-            xspace!(final, sim)
-            tran[bx, vx] = ns(final, sim, mask_tran)
-            refl[bx, vx] = ns(final, sim, mask_refl)
+            xspace!(final, loop_sim)
+            tran[bx, vx] = ns(final, loop_sim, mask_tran)
+            refl[bx, vx] = ns(final, loop_sim, mask_refl)
+            maxi[bx, vx] = maxim
           else
             tran[bx, vx] = NaN
+            maxi[bx, vx] = NaN
           end
           messages && print("\n" * tile_mess * @sprintf("   %3i|    %3i|      %s|%12.2f|",
                               collapse_occured ? 999 : Int(round(tran[bx, vx] * 100)),
@@ -161,8 +161,14 @@ function get_tile(
                               this_iteration_time
                             ))
           counter += 1
-          CSV.write("results/runtime_tran.csv", Tables.table(tran))
+
         end
+      end
+      CSV.write("results/runtime_tran3.csv", Tables.table(tran))
+      # csv2color("runtime_tran")
+      if return_maximum
+        CSV.write("results/runtime_maxi3.csv", Tables.table(maxi))
+        # csv2color("runtime_maxi")
       end
     end
     messages && @info "Saving tiles"
