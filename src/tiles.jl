@@ -163,18 +163,18 @@ function get_tile(
                             ))
           counter += 1
 
+          CSV.write("results/runtime_tran.csv", Tables.table(tran))
+          # csv2color("runtime_tran")
+          if return_maximum
+            CSV.write("results/runtime_maxi.csv", Tables.table(maxi))
+            # csv2color("runtime_maxi")
+          end
         end # barrier loop
       # end # spawnat
       # ipr += 1
       # ipr = ipr % workers()
 
       end # velocities loop
-      CSV.write("results/runtime_tran3.csv", Tables.table(tran))
-      # csv2color("runtime_tran")
-      if return_maximum
-        CSV.write("results/runtime_maxi3.csv", Tables.table(maxi))
-        # csv2color("runtime_maxi")
-      end
     end
     messages && @info "Saving tiles"
     push!(tile_dict, hs(name, gamma) => tran)
