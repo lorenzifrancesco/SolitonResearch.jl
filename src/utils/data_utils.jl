@@ -43,8 +43,16 @@ function ihs(s::String)
   end
 end
 
+function humanize()
+  human_readable_soliton()
+  human_readable_tile()
+  nothing
+end
 
-function human_readable_gs(save_path="results/", human_folder="human_readable/")
+function human_readable_soliton(
+  save_path="results/", 
+  human_folder="human_readable/",
+  file_name="soliton_")
   if isfile(save_path * "gs_dict.jld2")
     @info "Loading GS library..."
     gs_dict = JLD2.load(save_path * "gs_dict.jld2")
@@ -58,14 +66,32 @@ function human_readable_gs(save_path="results/", human_folder="human_readable/")
     name = ihs(k)[1]
     if name != "G3"
       gs_file = name * "_complex.csv" ## name, not gamma
-      CSV.write(human_folder * gs_file, Tables.table(gs))
+      CSV.write(human_folder * file_name * gs_file, Tables.table(gs))
       gs_file = name * "_abs2.csv" ## name, not gamma
-      CSV.write(human_folder * gs_file, Tables.table(abs2.(gs)))
+      CSV.write(human_folder * file_name * gs_file, Tables.table(abs2.(gs)))
     end
   end
   nothing
 end
 
+function human_readable_tile(
+  save_path="results/", 
+  human_folder="human_readable/",
+  file_name="tiles___")
+  if isfile(save_path * "tile_dict.jld2")
+    @info "Loading tiles library..."
+    tile_dict = JLD2.load(save_path * "tile_dict.jld2")
+  else
+    @info "No tiles library found! Quitting."
+    return
+  end
+  display(tile_dict)
+  for (k, tile) in tile_dict
+    name = ihs(k)[1]
+    CSV.write(human_folder * file_name * name * ".csv", Tables.table(tile))
+  end
+  nothing
+end
 
 function plot_tiles(matrix=nothing)
     # pyplot(size=(300, 220))
@@ -117,8 +143,10 @@ function plot_pavement(
     left_margin = 0 * Plots.mm,
     right_margin = 0 * Plots.mm,
   )
+  plot!(ht2, vaxis, vaxis .^2)
   savefig(ht2, "media/tiles_" * string(ihs(k)) * "_ht.pdf")
-  v, mask = process_tiles(v)
+  # v, mask = process_tiles(v)
+  mask = v
   ht = contour(vaxis, baxis, v, clabels = true, xlabel = L"v", ylabel = L"b")
   contour!(
       ht,
@@ -130,7 +158,13 @@ function plot_pavement(
       linestyle = :dot,
       linewidth = 1.8,
   )
-  savefig(ht, "media/tiles_" * string(ihs(k)) * "_ct.pdf")
+  alpha = 1.0
+  plot!(ht, vaxis, vaxis.^2 * alpha)
+  if k == "0000"
+    savefig(ht, "media/tiles_test_ct.pdf")
+  else
+    savefig(ht, "media/tiles_" * string(ihs(k)) * "_ct.pdf")
+  end
   nothing
 end
 

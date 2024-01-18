@@ -6,6 +6,7 @@ function plot_axial_heatmap(
     doifft = true,
     show = false,
     title = "__",
+    path = "media/"
 )
     @unpack t, X = sim
     x = X[1]
@@ -13,7 +14,7 @@ function plot_axial_heatmap(
     doifft ? u = mapslices(x -> xspace(x, sim), u, dims = (1)) : nothing
     ht = Plots.heatmap(real.(x), t, abs2.(u)', title = title)
     show ? display(ht) : nothing
-    savefig(ht, "media/tmp.pdf")
+    savefig(ht, path*"tmp.pdf")
     return ht
 end
 
