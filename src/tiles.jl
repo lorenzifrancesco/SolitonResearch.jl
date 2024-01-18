@@ -72,8 +72,6 @@ function get_tile(
     messages && @info "Already found tile for " equation, gamma
   else
     @info "===============================================\n\t Running tiling subroutine"
-    @info "Filling sim grid..."
-    sgrid = Array{Sim,2}(undef, (tiles, tiles))
     archetype = sim
     # all sims have the same x
     mask_refl = map(xx -> xx > 0, archetype.X[1] |> real)
@@ -82,18 +80,21 @@ function get_tile(
     this_iteration_time = 0.0
     avg_iteration_time = 0.0
     counter = 0
-    maxim = -1.0
     iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
 
     print("____________________________________________________________________\n")
     print("|tid| num|   bx|   vx|     dt|   T %|1-T-R %| collapse|   iter time|\n")
     print("____________________________________________________________________")
+
+    
     full_time = @elapsed begin
       Threads.@threads for vx in eachindex(vel_list)
         # @showprogress "Computing all the velocities..." for vx in eachindex(vel_list)
         vv = vel_list[vx]
         # messages && print("\t"*@sprintf("Free memory = %.3f GiB", Sys.free_memory() / 2^30))
         collapse_occured = false
+        maxim = -1.0
+        # @spawnat ipr+1 begin
         for (bx, bb) in enumerate(bar_list)
           loop_sim = imprint_vel_set_bar(archetype; vv=vv, bb=bb)
           if bx > 2 && isnan(tran[bx-1, vx]) && isnan(tran[bx-2, vx])
@@ -112,7 +113,7 @@ function get_tile(
           # messages && print("\n..."*tile_mess) 
           if !collapse_occured
             try
-              this_iteration_time = @elapsed (sol, maxim) = runsim(loop_sim; info=infos, return_maximum=return_maximum)
+              this_iteration_time = @elapsed  (sol, maxim) = runsim(loop_sim; info=infos, return_maximum=return_maximum)
               avg_iteration_time += this_iteration_time
               # FIXME avoid NPSE+ memory filling problem
               GC.gc()
@@ -162,8 +163,12 @@ function get_tile(
                             ))
           counter += 1
 
-        end
-      end
+        end # barrier loop
+      # end # spawnat
+      # ipr += 1
+      # ipr = ipr % workers()
+
+      end # velocities loop
       CSV.write("results/runtime_tran3.csv", Tables.table(tran))
       # csv2color("runtime_tran")
       if return_maximum
