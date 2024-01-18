@@ -117,7 +117,7 @@ function imprint_vel_set_bar(
   dt_set::Float64=0.01,
   time_step_limit::Int64=5000,
 )
-  @warn "Deepcopy is deprecated"
+  # @warn "Deepcopy is deprecated"
   simc = deepcopy(sim)
   @unpack_Sim simc
   x = X[1] |> real
@@ -138,7 +138,7 @@ function imprint_vel_set_bar(
   if time_steps > time_step_limit
     time_steps = time_step_limit
     dt = (tf - ti) / time_steps
-    @warn @sprintf("t_steps > %i, clipped dt=%0.4f", time_step_limit, dt)
+    # @warn @sprintf("t_steps > %i, clipped dt=%0.4f", time_step_limit, dt)
   end
   xspace!(psi_0, simc)
   psi_0 .= circshift(psi_0, shift)

@@ -13,7 +13,8 @@ using OrderedCollections
 using Printf
 using LaTeXStrings
 using ProgressBars, ProgressMeter, Colors, ColorSchemes 
-
+using Distributed
+ 
 include("init/_plot_settings.jl")
 include("plotting/plot_axial_evolution.jl")
 include("plotting/plot_isosurfaces.jl")

@@ -87,17 +87,20 @@ function plot_solitons(;
   p = plot()
   @assert is_gamma_uniform(soliton_dict)
   gamma = ihs(first(soliton_dict)[1])[2]
+  cnt = 1
   for (k, v) in soliton_dict
-    sim::Simulation = v[1] # TODO find an unique identifier for a Sim: it doesn't need to keep the FFTW plans inside
-    solution::AbstractArray = v[2]
+    # TODO improve the waste of time
+    sl = load_simulation_list()
+    sim = sl[cnt]
+    solution::AbstractArray = v
     plot_final_density!(
       p,
       [solution],
-      v;
+      sim;
       label=sim.name,
-      color=sim.color,
-      ls=sim.linestyle,
+      color=:black,
     )
+    cnt+=1
   end
   @info "special case for gamma = 0.65"
   plot!(p, xlims=(-4, 4), ylims=(0.0, 0.6))
@@ -120,7 +123,7 @@ function plot_solitons(;
     display(p)
   end
   plot!(p, xlims=(-1, 1), ylims=(0.30, 0.52)) # 0.4, 0.45 for gamma 065
-  save_plots ? savefig(p, "media/" * string(gamma_param) * "_ground_states_zoom.pdf") :  nothing
+  save_plots ? savefig(p, "media/" * string(gamma) * "_ground_states_zoom.pdf") :  nothing
   nothing
 end
 
