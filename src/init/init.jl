@@ -11,7 +11,7 @@ function load_simulation_list(
   for eq in eqs
     push!(sim_dictionary, load_simulation(input_dir, eq))
   end
-  sort(sim_dictionary, lt=SolitonDynamics.isless)
+  #  sort(sim_dictionary, lt=SolitonDynamics.isless)
   return sim_dictionary
 end
 
