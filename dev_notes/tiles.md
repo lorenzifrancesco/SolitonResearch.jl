@@ -25,7 +25,7 @@ What is the physical meaning?
 - [ ] try to use a very precise $dt$ for that.
 
 ```
-sd = load_parameters_alt(gamma_param=0.65)
+sd = load_parameters(gamma_param=0.65)
        prepare_for_collision(sd, 0.65)
        g3 = sdc["G3"]
 

@@ -1,250 +1,102 @@
-function load_parameters_alt(;
-    vv::Float64 = 0.0,
-    bb::Float64 = 0.0,
-    gamma_param::Float64 = 0.65,
-    Nsaves::Int64 = 200,
-    eqs = ["G1", "CQ", "N", "Np", "G3"],
-    nosaves = false,
-    N_axial_1D = 256, ## optimized values
-    N_axial_3D = 256,
-    N_trans_3D = 40,
-    Lx = 40.0,
-    Lt = 10.0,
-)
+"""
+Load the simulation dictionary.
+Input: directory of input files
+Output: dictionary with selected 
+"""
+function load_simulation_list(
+  input_dir = "input/",
+  eqs = [GPE_1D, NPSE, NPSE_plus],)
+  @warn "GPE_3D not loading"
+  sim_dictionary::Array{Sim} = []
+  for eq in eqs
+    push!(sim_dictionary, load_simulation(input_dir, eq))
+  end
+  sort(sim_dictionary, lt=SolitonDynamics.isless)
+  return sim_dictionary
+end
 
-    sim_dictionary::OrderedDict{String,Sim} = OrderedDict()
-    maxiters_1d = 1e10
-    maxiters_3d = 1e10
-    dt_all = 0.01 # important for the prepare_for_collision function, then overwritten in imprint_vel_set_bar
-    iswitch_all = -im
+"""
+Load a single simulation from the input specification
+Input: input configuration directory, equation selection, row of the configuration file to be loaded
+"""
+function load_simulation(input_dir, eq::EquationType; 
+  idx_domain=1, 
+  idx_nonlin=1,
+  idx_precis=1
+  )
+  domain_df=CSV.read(input_dir*"domain.csv", DataFrame)
+  nonlin_df=CSV.read(input_dir*"nonlinearity.csv", DataFrame)
+  precis_df=CSV.read(input_dir*"precision.csv", DataFrame)
+  @info @sprintf("Loading %s... \n\tDomain      : %s,\n\tNonlinearity: %s,\n\tPrecis      : %s.", eq.name, domain_df.name[idx_domain], nonlin_df.name[idx_nonlin], precis_df.name[idx_precis])
+  if eq == GPE_3D
+    L = (domain_df.L_axial[idx_domain], domain_df.L_radial[idx_domain], domain_df.L_radial[idx_domain])
+    N = (domain_df.N_axial_3D[idx_domain], domain_df.N_radial[idx_domain], domain_df.N_radial[idx_domain])
+    sim = Sim{length(L),CuArray{Complex{Float64}}}(L=L, N=N)
+  else
+    L = (domain_df.L_axial[idx_domain],)
+    N = (domain_df.N_axial_1D[idx_domain],)
+    sim = Sim{length(L),Array{Complex{Float64}}}(L=L, N=N)
+  end
+  sim.name = eq.name
+  sim.iswitch = 1.0
+  sim.manual = true
+  sim.equation = eq
+  sim.solver = SplitStep
+  # interaction parameter
+  gamma_param = nonlin_df.gamma[idx_nonlin]
+  sim.g = gamma2g(gamma_param, sim.equation)
+  if eq == GPE_3D
+    check = - gamma_param * (4 * pi)
+  else
+    check = -2 * gamma_param
+  end
 
-    max_vel = 1.0
-    ####
-    #### match it to the gs 
-    ####
-    abstol_all = 1e-3
-    # time_steps_all = 200 do not fix it. Use a constant dt
-
-    initial_width = 10
-
-    # =========================================================
-    ## 1D-GPE 
-    L = (Lx,)
-    N = (N_axial_1D,)
-    sim_gpe_1d = Sim{length(L),Array{Complex{Float64}}}(L = L, N = N)
-    @unpack_Sim sim_gpe_1d
-    name = "GPE-1D"
-    iswitch = iswitch_all
-    equation = GPE_1D
-    manual = true
-    solver = SplitStep
-    # interaction parameter
-    g = -2 * gamma_param
-    n = 100
-    abstol = abstol_all
-    x = X[1]
-    k = K[1]
-    x0 = 0.0 # L[1] / 4
-    dV = volume_element(L, N)
-    flags = FFTW.EXHAUSTIVE
-    alg = BS3()
-
-    # will be overwritten
-    if nosaves
-        Nt = 2
-    else
-        Nt = Nsaves
-    end
-    tf = 2.0
-    t = LinRange(ti, tf, Nt)
-    dt = dt_all
-    time_steps = Int(floor((tf - ti) / dt))
-    # specs for GS sim
-    maxiters = maxiters_1d
-
-    # SPR condensate bright soliton t in units of omega_perp^-1
-    analytical_gs = zeros(N)
-    @. analytical_gs =
-        sqrt(gamma_param / 2) * 2 / (exp(gamma_param * x) + exp(-x * gamma_param))
-    @. psi_0 = exp(-(x - x0)^2 / initial_width) * exp(-im * (x - x0) * vv)
-    psi_0 = psi_0 / sqrt(ns(psi_0, sim_gpe_1d))
-    kspace!(psi_0, sim_gpe_1d)
-    @assert isapprox(nsk(psi_0, sim_gpe_1d), 1.0)
-    @pack_Sim! sim_gpe_1d
-
-    if "G1" in eqs
-        push!(sim_dictionary, "G1" => sim_gpe_1d)
-    end
-
-    # # =========================================================
-    # ## CQGPE 
-    # sim_ccgpe = deepcopy(sim_gpe_1d)
-    # @unpack_Sim sim_ccgpe
-    # equation = CQGPE
-    # @pack_Sim! sim_ccgpe
-
-    # if "CQ" in eqs
-    #   push!(sim_dictionary, "CQ" => sim_ccgpe)
-    # end
-
-    # =========================================================
-    ## NPSE
-    L = (Lx,)
-    N = (N_axial_1D,)
-    sim_npse = Sim{length(L),Array{Complex{Float64}}}(L = L, N = N)
-    initial_state = zeros(N[1])
-    @unpack_Sim sim_npse
-    name = "NPSE"
-    iswitch = iswitch_all
-    manual = true
-    solver = SplitStep
-    # interaction parameter
-    g = -2 * gamma_param
-    n = 100
-    abstol = abstol_all
-    x = X[1]
-    k = K[1]
-    x0 = 0.0 # L[1] / 4
-    dV = volume_element(L, N)
-    flags = FFTW.EXHAUSTIVE
-    alg = BS3()
-
-    equation = NPSE
-    # interaction parameter
+  @assert check == sim.g
+  if eq in [NPSE, NPSE_plus]
     if gamma_param > 2 / 3
-        @warn "we should expect NPSE collapse"
+      @warn "we should expect NPSE collapse"
     end
-    sigma2 = init_sigma2(g)
-    # will be overwritten
-    if nosaves
-        Nt = 2
-    else
-        Nt = Nsaves
-    end
-    tf = 2.0
-    t = LinRange(ti, tf, Nt)
-    dt = dt_all
-    time_steps = Int(floor((tf - ti) / dt))
-    # specs for GS sim
-    maxiters = maxiters_1d
+    sim.sigma2 = init_sigma2(sim.g)
+  end
+  sim.dV = volume_element(L, N)
+  # sim.flags = FFTW.EXHAUSTIVE
+  sim.collapse_threshold = nonlin_df.collapse_threshold[idx_nonlin]
+  sim.abstol = precis_df.abstol[idx_precis]
+  if eq == GPE_3D
+    @warn size(sim.X)
+    x = Array(sim.X[1])
+    y = Array(sim.X[2])
+    z = Array(sim.X[3])
+  else
+    x = sim.X[1]
+  end
+  # will be overwritten
+  if precis_df.no_saves[idx_precis]
+    sim.Nt = 2
+  else
+    sim.Nt = precis_df.N_saves[idx_precis]
+  end
+  sim.tf = 2.0
+  sim.t = LinRange(0.0, sim.tf, sim.Nt)
+  sim.dt = domain_df.dt[idx_domain]
+  sim.time_steps = Int(floor(sim.tf / sim.dt))
+  # specs for GS sim
 
-    # SPR condensate bright soliton t in units of omega_perp^-1
-    analytical_gs = zeros(N)
-    @. analytical_gs =
-        sqrt(gamma_param / 2) * 2 / (exp(gamma_param * x) + exp(-x * gamma_param))
-    @. psi_0 = exp(-(x - x0)^2 / initial_width) * exp(-im * (x - x0) * vv)
-    psi_0 = psi_0 / sqrt(ns(psi_0, sim_gpe_1d))
-    kspace!(psi_0, sim_gpe_1d)
-    @assert isapprox(nsk(psi_0, sim_npse), 1.0)
-    @pack_Sim! sim_npse
-
-    if "N" in eqs
-        push!(sim_dictionary, "N" => sim_npse)
-    end
-    # =========================================================
-    ## NPSE_plus (unable to copy)
-    L = (Lx,)
-    N = (N_axial_1D,)
-    sim_npse_plus = Sim{length(L),Array{Complex{Float64}}}(L = L, N = N)
-    initial_state = zeros(N[1])
-    @unpack_Sim sim_npse_plus
-    name = "NPSE-plus"
-    iswitch = iswitch_all
-    manual = true
-    solver = SplitStep
-    # interaction parameter
-    g = -2 * gamma_param
-    n = 100
-    abstol = abstol_all
-    x = X[1]
-    k = K[1]
-    x0 = 0.0 # L[1] / 4
-    dV = volume_element(L, N)
-    flags = FFTW.EXHAUSTIVE
-    alg = BS3()
-
-    equation = NPSE_plus
-    # interaction parameter
-    if gamma_param > 2 / 3
-        @warn "we should expect NPSE collapse"
-    end
-    sigma2 = init_sigma2(g)
-    # will be overwritten
-    if nosaves
-        Nt = 2
-    else
-        Nt = Nsaves
-    end
-    tf = 2.0
-    t = LinRange(ti, tf, Nt)
-    dt = dt_all
-    time_steps = Int(floor((tf - ti) / dt))
-    # specs for GS sim
-    maxiters = maxiters_1d
-
-    # SPR condensate bright soliton t in units of omega_perp^-1
-    analytical_gs = zeros(N)
-    @. analytical_gs =
-        sqrt(gamma_param / 2) * 2 / (exp(gamma_param * x) + exp(-x * gamma_param))
-    @. psi_0 = exp(-(x - x0)^2 / initial_width) * exp(-im * (x - x0) * vv)
-    psi_0 = psi_0 / sqrt(ns(psi_0, sim_gpe_1d))
-    kspace!(psi_0, sim_gpe_1d)
-    @assert isapprox(nsk(psi_0, sim_npse_plus), 1.0)
-    @pack_Sim! sim_npse_plus
-
-    if "Np" in eqs
-        push!(sim_dictionary, "Np" => sim_npse_plus)
-    end
-    # # =========================================================
-    # ## 3D-GPE 
-    # L = (Lx,Lt,Lt)
-    # N = (N_axial_3D, N_trans_3D, N_trans_3D)
-    # sim_gpe_3d = Sim{length(L), CuArray{Complex{Float64}}}(L=L, N=N)
-    # initial_state = zeros(N[1])
-    # @unpack_Sim sim_gpe_3d
-    # iswitch = iswitch_all
-    # equation = GPE_3D
-    # manual = true
-    # solver = SplitStep
-    # g = - gamma_param * (4 * pi)
-    
-    # alg = BS3()
-    # # we can augment the accuracy
-
-
-    # x = Array(X[1])
-    # y = Array(X[2])
-    # z = Array(X[3])
-    # dV= volume_element(L, N)    
-    # flags = FFTW.EXHAUSTIVE
-    # if nosaves
-    #   Nt = 2
-    # else
-    #   Nt = 50
-    # end
-    # tf = 2.0
-    # t = LinRange(ti, tf, Nt)
-    # dt = dt_all
-    # time_steps = Int(floor((tf-ti)/dt))
-
-    # # specs for GS sim
-    # maxiters = maxiters_3d
-
-    # tmp = [exp(-((x-x0)^2/initial_width + (y^2 + z^2)/2)) * exp(-im*(x-x0)*vv) for x in x, y in y, z in z]
-    # psi_0 = CuArray(tmp)
-    # psi_0 .= psi_0 / sqrt(sum(abs2.(psi_0) * dV))
-    # kspace!(psi_0, sim_gpe_3d)
-    # tmp = [1/2*(y^2 + z^2) for x in x, y in y, z in z]
-    # V0 = CuArray(tmp)
-    # @pack_Sim! sim_gpe_3d
-    # # @info sim_gpe_3d.g /4/pi
-    # # @info sim_gpe_1d.g /2
-
-    # if "G3" in eqs
-    #     push!(sim_dictionary, "G3" => sim_gpe_3d)
-    # end
-
-    ## Sorting
-    sort(sim_dictionary)
-    return sim_dictionary
+  # SPR condensate bright soliton t in units of omega_perp^-1
+  initial_width = nonlin_df.initial_width[idx_nonlin]
+  if eq == GPE_3D
+    tmp = [exp(-((x)^2/initial_width + (y^2 + z^2)/2)) for x in x, y in y, z in z]
+    sim.psi_0 = CuArray(tmp)
+    sim.psi_0 .= sim.psi_0 / sqrt(sum(abs2.(sim.psi_0) * sim.dV)) # is this normalization needed because of CuArray/Array? 
+    sim.maxiters = domain_df.max_iters[idx_domain] / 10 # set smart maxiters in 3D
+    tmp = [1/2*(y^2 + z^2) for x in x, y in y, z in z]
+    sim.V0 = CuArray(tmp)
+  else
+    @. sim.psi_0 = exp(-(x/initial_width)^2)
+    sim.psi_0 = sim.psi_0 / sqrt(ns(sim.psi_0, sim))
+    sim.maxiters = domain_df.max_iters[idx_domain]
+  end 
+  kspace!(sim.psi_0, sim)
+  @assert isapprox(nsk(sim.psi_0, sim), 1.0, rtol=1.0e-9)
+  return sim
 end
