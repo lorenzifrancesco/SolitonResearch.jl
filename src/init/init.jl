@@ -5,8 +5,8 @@ Output: dictionary with selected
 """
 function load_simulation_list(
   input_dir = "input/",
-  eqs = [GPE_1D, NPSE, NPSE_plus],
-)
+  eqs = [GPE_1D, NPSE, NPSE_plus],)
+  @warn "GPE_3D not loading"
   sim_dictionary::Array{Sim} = []
   for eq in eqs
     push!(sim_dictionary, load_simulation(input_dir, eq))

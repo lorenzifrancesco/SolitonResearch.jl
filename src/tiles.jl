@@ -23,7 +23,11 @@ function fill_tiles(;
   plot_tiles()
 end
 
+"""
+Get the tiles, check if they are precomputed 
+(TODO get partially precomputed tile grid)
 
+"""
 function get_tile(
   sim::Sim{1,Array{Complex{Float64}}};
   use_precomputed=false,
@@ -33,6 +37,8 @@ function get_tile(
   messages=true,
   infos=false
 )
+  name = sim.equation.name
+  gamma = g2gamma(sim.g, sim.equation)
   messages && @info "==============================================="
   messages && @info "\t\tTiling " * string(sim.equation.name)
   messages && @info @sprintf("\t\tUsing gamma: %.3f", gamma)
@@ -53,8 +59,6 @@ function get_tile(
   refl = -0.1 * ones((tiles, tiles))
 
   sim.iswitch = 1
-  name = sim.equation.name
-  gamma = g2gamma(sim.g, sim.equation)
   tile_dict = load_tile_dictionary()
   messages && @info "\tSetting ground state..."
   prepare_for_collision!(sim, gamma; use_precomputed_gs=true)
@@ -95,7 +99,7 @@ function get_tile(
         for (bx, bb) in enumerate(bar_list)
           sim = sgrid[bx, vx]
           if bx > 2 && isnan(tran[bx-1, vx]) && isnan(tran[bx-2, vx])
-            messages && @printf("\n Collapse shortcut!")
+            # messages && @printf("\n Collapse shortcut!")
             collapse_occured = true
           end
           sol = nothing
@@ -184,6 +188,7 @@ function get_tile(
   tiles=100,
   plot_finals=false,
 )
+  @assert false
   saveto = "../media/tiles_$(name).pdf"
   max_vel = 1
   max_bar = 1
