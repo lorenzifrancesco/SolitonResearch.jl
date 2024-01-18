@@ -9,7 +9,7 @@ collapse validation
 """
 function fill_tiles(;
   return_maximum=false,
-  number_of_tiles=10,
+  number_of_tiles=20,
   eqs=[GPE_1D],
   plot_finals=false,
   gamma=0.65
@@ -101,6 +101,7 @@ function get_tile(
           if bx > 2 && isnan(tran[bx-1, vx]) && isnan(tran[bx-2, vx])
             # messages && @printf("\n Collapse shortcut!")
             collapse_occured = true
+            this_iteration_time = 0.0 
           end
           sol = nothing
           tile_mess = @sprintf("| %2i|%4i|  %3i|  %3i|  %.3f|",
