@@ -2,11 +2,7 @@
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-<<<<<<< HEAD
 project_hash = "7eca9a31091f65ea57b41dc24809e7d0a32f07d9"
-=======
-project_hash = "716f4170d8fc51ce39e3daac932453c9607c26f9"
->>>>>>> parent of e5ab48d (try: multiprocessin)
 
 [[deps.ADTypes]]
 git-tree-sha1 = "41c37aa88889c171f1300ceac1313c06e891d245"
