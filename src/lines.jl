@@ -68,7 +68,6 @@ function get_lines(
   points=100,
   messages=true
 )
-
   saveto = "../media/lines_$(name).pdf"
   max_vel = vel_interval(2)
   max_bar = bar_interval(2)
@@ -76,16 +75,31 @@ function get_lines(
   @warn points  
   # asymmetric matrix: 
   @assert sweep in ["vel", "bar"]
-  if sweep == "vel"
-    vel_list = LinRange(vel_interval(1), max_vel, points)
-    bar_list = LinRange(bar_interval(1), max_bar, lines)
-    x_axis = vel_list
-    y_axis = bar_list
-  elseif sweep == "bar"
-    vel_list = LinRange(vel_interval(1), max_vel, lines)
-    bar_list = LinRange(bar_interval(1), max_bar, points)
-    x_axis = bar_list
-    y_axis = vel_list
+  # TODO fix, very inefficient
+  if lines > 1
+    if sweep == "vel"
+      vel_list = LinRange(vel_interval(1), max_vel, points)
+      bar_list = LinRange(bar_interval(1), max_bar, lines)
+      x_axis = vel_list
+      y_axis = bar_list
+    elseif sweep == "bar"
+      vel_list = LinRange(vel_interval(1), max_vel, lines)
+      bar_list = LinRange(bar_interval(1), max_bar, points)
+      x_axis = bar_list
+      y_axis = vel_list
+    end
+  elseif lines == 1
+    if sweep == "vel"
+      vel_list = LinRange(vel_interval(1), max_vel, points)
+      bar_list = [bar_interval(1)]
+      x_axis = vel_list
+      y_axis = bar_list
+    elseif sweep == "bar"
+      vel_list = [vel_interval(1)]
+      bar_list = LinRange(bar_interval(1), max_bar, points)
+      x_axis = bar_list
+      y_axis = vel_list
+    end
   end
   tran = Array{Float64,2}(undef, (lines, points))
   refl = Array{Float64,2}(undef, (lines, points))
@@ -99,8 +113,6 @@ function get_lines(
   mask_tran = map(xx -> xx < 0, archetype.X[1] |> real)
   avg_iteration_time = 0.0
 
-
-        #
   print("____________________________________________________________________\n")
   print("|tid|   x |   y |     dt|   T %|1-T-R %| collapse|   iter time|\n")
   print("____________________________________________________________________")
@@ -182,7 +194,8 @@ function get_lines(
   @assert sweep in ["vel", "bar"]
   if sweep == "vel"
     vel_list = LinRange(vel_interval(1), max_vel, points)
-    bar_list = LinRange(bar_interval(1), max_bar, lines) # FIXME find a better way to do this 0.1->1.0
+    bar_list = LinRange(bar_interval(1), max_bar, lines) 
+    # FIXME find a better way to do this 0.1->1.0
     x_axis = vel_list
     y_axis = bar_list
   elseif sweep == "bar"
