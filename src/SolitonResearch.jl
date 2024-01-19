@@ -14,7 +14,9 @@ using OrderedCollections
 using Printf
 using LaTeXStrings
 using ProgressBars, ProgressMeter, Colors, ColorSchemes 
+using InteractiveUtils, Base.Filesystem
 using Distributed
+
  
 include("init/_plot_settings.jl")
 include("plotting/plot_axial_evolution.jl")
