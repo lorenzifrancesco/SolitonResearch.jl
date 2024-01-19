@@ -27,8 +27,8 @@ function get_soliton(
   sim.iswitch = -im
   eq = sim.equation
   gs_dict = load_soliton_dictionary()
-  gamma_param = g2gamma(sim.g, sim.equation)
-  time_requirement = @elapsed begin
+  gamma_param = g2gamma(sim.g, eq)
+  # time_requirement = @elapsed begin
     if !haskey(gs_dict, hs(eq.name, gamma_param)) || !use_precomputed
       sol = nothing
       try
@@ -42,9 +42,9 @@ function get_soliton(
           throw(err)
         end
       end
-      push!(gs_dict, hs(eq.name, gamma_param) => Array(sol.u))
+      push!(gs_dict, hs(eq.name, gamma_param) => sol.u)
     end
-  end
+  # end
   info && @info @sprintf("Ground state time: %8.4fs", time_requirement)
   solution = gs_dict[hs(eq.name, gamma_param)]
 
@@ -74,18 +74,22 @@ function plot_solitons(;
   @assert is_gamma_uniform(soliton_dict)
   gamma = ihs(first(soliton_dict)[1])[2]
   cnt = 1
+  sl = load_simulation_list()
   for (k, v) in soliton_dict
-    # TODO improve the waste of time
-    sl = load_simulation_list()
-    sim = sl[cnt]
-    solution::Array{ComplexF64} = v
+    sim = sl[findall(x -> x.equation.name == ihs(k)[1], sl)[1]]
+    @warn ihs(k)
+    @warn sim.color
+    solution::AbstractArray{ComplexF64} = v
     plot_final_density!(
       p,
       [solution],
       sim;
       label=sim.name,
-      color=:black,
+      color=sim.color,
+      ls=sim.linestyle,
+      show=true
     )
+    @warn sim.linestyle
     cnt += 1
   end
   @info "special case for gamma = 0.65"

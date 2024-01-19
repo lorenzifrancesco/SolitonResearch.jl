@@ -5,7 +5,7 @@ Output: dictionary with selected
 """
 function load_simulation_list(;
   input_dir="input/",
-  eqs=[GPE_1D, NPSE, NPSE_plus],
+  eqs=[GPE_3D, GPE_1D, NPSE, NPSE_plus],
   verb=true)
   sim_dictionary::Array{Sim} = []
   for eq in eqs
@@ -98,5 +98,8 @@ function load_simulation(input_dir, eq::EquationType;
   end
   kspace!(sim.psi_0, sim)
   @assert isapprox(nsk(sim.psi_0, sim), 1.0, rtol=1.0e-9)
+  sim.color = get_color(sim.equation)
+  sim.linestyle = get_linestyle(sim.equation)
+  sim.name = paper_name(sim.equation)
   return sim
 end
