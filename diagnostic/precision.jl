@@ -22,7 +22,7 @@ function precision(vx, bx, n_tiles=50)
   uold = zeros(length(sim.psi_0))
   for (id, dd) in enumerate(dt_list)
     try
-      exec_time[id] = @elapsed unew = get_final(sim, vv, bb, dd)
+      exec_time[id] = @elapsed unew = get_final(sim, vv, bb, n_tiles,  dd)
       if id == 1
         uold = unew
       end
@@ -80,7 +80,7 @@ function get_final(sim, vx, bx, n_tiles, dt_set)
     psi2 = abs2.(xspace(sol.u[end], sim))
     p = plot(real(sim.X[1]), psi2)
     savefig(p, "diagnostic/media/tmp_vx_"* string(vx)*"_bx_"*string(bx)*"_final.pdf")
-    plot_axial_heatmap(sol.u, sol.t, sim, path="diagnostic/media/")
+    plot_axial_heatmap(diag, sol.u, sol.t, sim, path="diagnostic/media/")
     sleep(0.2)
   return sol.u[end]
 end
@@ -90,4 +90,4 @@ function distance(u1, u2)
   return sum(abs2.(u1 .- u2))/sum(abs2.(u1))
 end
 
-precision()
+precision(10, 10, 50)
