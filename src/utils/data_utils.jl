@@ -54,10 +54,10 @@ function human_readable_soliton(
   human_folder="human_readable/",
   file_name="soliton_")
   if isfile(save_path * "gs_dict.jld2")
-    @info "Loading GS library..."
+    # @info "Loading GS library..."
     gs_dict = JLD2.load(save_path * "gs_dict.jld2")
   else
-    @info "No GS library found! Quitting."
+    # @info "No GS library found! Quitting."
   end
   display(gs_dict)
   info_file = "infos.txt"
@@ -222,16 +222,15 @@ end
 
 function csv2color(file_name=nothing;
   path="results/")
-  pyplot()
+  # pyplot()
   if isnothing(file_name)
     file_name = choose_file(path)
     file_name = file_name[1:end-4]
   end
-  @warn path*file_name
   vals = Tables.matrix(CSV.read(path * file_name * ".csv", DataFrame))
   (vx, bx) = get_pavement_axes(vals)
   p = heatmap(vx, bx, vals, title=file_name, interpolate=false)
-  savefig(p, "media/colorized_csv" * file_name * ".pdf")
+  savefig(p, "media/Color_" * file_name * ".pdf")
   nothing
 end
 

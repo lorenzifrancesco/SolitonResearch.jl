@@ -35,11 +35,10 @@ export GPE_1D, NPSE, NPSE_plus, GPE_3D
 
 @setup_workload begin
   @compile_workload begin
-    @info "entering compile workload"
-    sl = load_simulation_list()
+    sl = load_simulation_list(verb=false)
     sim = sl[1]
     prepare_for_collision!(sim, 0.65)
-    csv2color("")
+    csv2color("precompile")
   end
 end
 
