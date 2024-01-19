@@ -5,7 +5,7 @@ using ExportAll
 using PrecompileTools
 
 using SolitonDynamics
-import CUDA: CuArray 
+import CUDA: CuArray
 using Plots
 import JLD2, CSV
 using Tables, DataFrames
@@ -13,11 +13,11 @@ using Interpolations
 using OrderedCollections
 using Printf
 using LaTeXStrings
-using ProgressBars, ProgressMeter, Colors, ColorSchemes 
+using ProgressBars, ProgressMeter, Colors, ColorSchemes
 using InteractiveUtils, Base.Filesystem
 using Distributed
 
- 
+
 include("init/_plot_settings.jl")
 include("plotting/plot_axial_evolution.jl")
 include("plotting/plot_isosurfaces.jl")

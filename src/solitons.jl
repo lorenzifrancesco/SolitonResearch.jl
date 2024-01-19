@@ -3,7 +3,7 @@ Iterate the soliton finding routine over a set of equations.
 Use precomputed values when possible
 """
 function fill_solitons(;
-  eqs = [GPE_3D, GPE_1D],
+  eqs=[GPE_3D, GPE_1D],
   use_precomputed=true)
   sl = load_simulation_list()
   sl = filter(p -> (p.equation in eqs), sl)
@@ -22,7 +22,7 @@ function get_soliton(
   sim::Sim;
   use_precomputed::Bool=true,
   info::Bool=false,
-  save_path = "results/")
+  save_path="results/")
 
   sim.iswitch = -im
   eq = sim.equation
@@ -60,8 +60,8 @@ of superimposed ground states.
 An passant, create a human readable version of the dictionary
 """
 function plot_solitons(;
-  save_path = "results/",
-  media_path = "media/",
+  save_path="results/",
+  media_path="media/",
   save_plots::Bool=true,
   show_plots::Bool=false,
   info::Bool=false)
@@ -86,7 +86,7 @@ function plot_solitons(;
       label=sim.name,
       color=:black,
     )
-    cnt+=1
+    cnt += 1
   end
   @info "special case for gamma = 0.65"
   plot!(p, xlims=(-4, 4), ylims=(0.0, 0.6))
@@ -102,14 +102,14 @@ function plot_solitons(;
   if show_plots
     display(p)
   end
-  save_plots ? savefig(p, "media/" * string(gamma) * "_ground_states.pdf") :  nothing
+  save_plots ? savefig(p, "media/" * string(gamma) * "_ground_states.pdf") : nothing
 
   # zoomed version
   if show_plots
     display(p)
   end
   plot!(p, xlims=(-1, 1), ylims=(0.30, 0.52)) # 0.4, 0.45 for gamma 065
-  save_plots ? savefig(p, "media/" * string(gamma) * "_ground_states_zoom.pdf") :  nothing
+  save_plots ? savefig(p, "media/" * string(gamma) * "_ground_states_zoom.pdf") : nothing
   nothing
 end
 
@@ -138,7 +138,7 @@ end
 """
 Check if the dictionary exists, return it if it exists, 
   or save a new empty one and return it if doesn't
-""" 
+"""
 function load_soliton_dictionary(;
   save_path="results/",
   info::Bool=false
@@ -147,7 +147,7 @@ function load_soliton_dictionary(;
     gs_dict = JLD2.load(save_path * "gs_dict.jld2")
     info && @info "Found GS dictionary: " gs_dict
   else
-    gs_dict = Dict{EquationType, Tuple{AbstractArray}}()
+    gs_dict = Dict{EquationType,Tuple{AbstractArray}}()
     JLD2.save(join([save_path, "gs_dict.jld2"]), gs_dict)
   end
   return gs_dict
