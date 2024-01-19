@@ -106,7 +106,7 @@ function get_lines(
   print("____________________________________________________________________")
   full_time = @elapsed begin
     # TODO put threads in the inner loop
-    Threads.@threads for ix in eachindex(y_axis)
+    Threads.@threads for ix in eachindex(x_axis)
       x = x_axis[ix]
       for (iy, y) in enumerate(y_axis)
         if sweep == "vel"
