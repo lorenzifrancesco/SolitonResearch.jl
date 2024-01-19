@@ -7,7 +7,7 @@ print(read(cmd, String))
 print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 
 # TODO load configuration from input
-N = 10
+N = 20
 return_maximum = true
 @printf("N=%i, return_maximum=%d", N, return_maximum)
 print("\n=================================================================\n")
