@@ -59,7 +59,6 @@ function human_readable_soliton(
   else
     # @info "No GS library found! Quitting."
   end
-  display(gs_dict)
   info_file = "infos.txt"
   # CSV.write(human_folder * info_file, 4)
   for (k, gs) in gs_dict
@@ -69,6 +68,9 @@ function human_readable_soliton(
       CSV.write(human_folder * file_name * gs_file, Tables.table(gs))
       gs_file = name * "_abs2.csv" ## name, not gamma
       CSV.write(human_folder * file_name * gs_file, Tables.table(abs2.(gs)))
+    else name
+      @info "Not humanizing GPE_3D soliton"
+      display(gs)
     end
   end
   nothing

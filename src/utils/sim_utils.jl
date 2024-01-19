@@ -228,19 +228,3 @@ function imprint_vel_set_bar(
   @pack_Sim! simc
   return simc
 end
-
-
-function set_g!(sim::Sim{1,Array{Complex{Float64}}}, gamma_param::Float64=0.4)
-  @unpack_Sim sim
-  g = -2 * gamma_param
-  @pack_Sim! sim
-  return
-end
-
-
-function set_g!(sim::Sim{3,CuArray{Complex{Float64}}}, gamma_param::Float64=0.4)
-  @unpack_Sim sim
-  g = -(4 * pi) * gamma_param
-  @pack_Sim! sim
-  return
-end

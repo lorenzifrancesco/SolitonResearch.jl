@@ -1,158 +1,111 @@
 function plot_axial_heatmap(
-    u,
-    time_axis,
-    sim::Sim{1,Array{ComplexF64}};
-    info = false,
-    doifft = true,
-    show = false,
-    title = "__",
-    path = "media/"
+  u,
+  time_axis,
+  sim::Sim{1,Array{ComplexF64}};
+  info=false,
+  doifft=true,
+  show=false,
+  title="__",
+  path="media/"
 )
-    @unpack t, X = sim
-    x = X[1]
-    u = reduce(hcat, u)
-    doifft ? u = mapslices(x -> xspace(x, sim), u, dims = (1)) : nothing
-    ht = Plots.heatmap(real.(x), t, abs2.(u)', title = title)
-    show ? display(ht) : nothing
-    savefig(ht, path*"tmp.pdf")
-    return ht
+  @unpack t, X = sim
+  x = X[1]
+  u = reduce(hcat, u)
+  doifft ? u = mapslices(x -> xspace(x, sim), u, dims=(1)) : nothing
+  ht = Plots.heatmap(real.(x), t, abs2.(u)', title=title)
+  show ? display(ht) : nothing
+  savefig(ht, path * "tmp.pdf")
+  return ht
 end
 
 function plot_axial_heatmap(
-    u,
-    time_axis,
-    sim::Sim{3,CuArray{ComplexF64}};
-    axis = 1,
-    info = false,
-    doifft = true,
-    show = false,
-    title = "_",
+  u,
+  time_axis,
+  sim::Sim{3,CuArray{ComplexF64}};
+  axis=1,
+  info=false,
+  doifft=true,
+  show=false,
+  title="_",
 )
-    @unpack t, X = sim
-    x = Array(X[axis])
-    @assert axis == 1
-    ax_list = (1, 2, 3)
-    ax_list = filter(x -> x != axis, ax_list)
+  @unpack t, X = sim
+  x = Array(X[axis])
+  @assert axis == 1
+  ax_list = (1, 2, 3)
+  ax_list = filter(x -> x != axis, ax_list)
 
-    doifft ? ux = [xspace(x, sim) for x in u] : nothing
-    u_axial = [sum(abs2.(x), dims = ax_list)[:, 1, 1] for x in ux]
-    u_axial = Array(reduce(hcat, u_axial))
-    ht = Plots.heatmap(real.(x), time_axis, u_axial', title = title)
-    display(ht)
-    return ht
+  doifft ? ux = [xspace(x, sim) for x in u] : nothing
+  u_axial = [sum(abs2.(x), dims=ax_list)[:, 1, 1] for x in ux]
+  u_axial = Array(reduce(hcat, u_axial))
+  ht = Plots.heatmap(real.(x), time_axis, u_axial', title=title)
+  display(ht)
+  return ht
 end
 
-function plot_final_density(
-    u,
-    sim::Sim{1,Array{ComplexF64}};
-    info = false,
-    doifft = true,
-    label = "initial",
-    lw = 1,
-    ls = :solid,
-    color = :black,
-    title = "",
-    show = false,
-    enforce = true
+
+function plot_final_density!(
+  p,
+  u,
+  sim::Sim{1,Array{ComplexF64}};
+  info=false,
+  doifft=true,
+  label="initial",
+  lw=1,
+  ls=:solid,
+  color=:black,
+  show=false,
+  title="_"
 )
-    @unpack t, X = sim
-    x = Array(X[1])
-    tmp = u[end]
-    doifft ? final = xspace(tmp, sim) : final = tmp
-    if enforce
-      @assert isapprox(ns(final, sim), 1.0, atol = 1e-3)
-    end
-    p = plot(
-        real.(x),
-        abs2.(final),
-        label = label,
-        linewidth = lw,
-        linestyle = ls,
-        color = color,
-        title = title,
-    )
-    show ? display(p) : nothing
-    return p
+  @unpack t, X = sim
+  x = Array(X[1])
+  tmp = u[end]
+  doifft ? final = xspace(tmp, sim) : final = tmp
+  @assert isapprox(ns(final, sim), 1.0, atol=1e-3)
+  plot!(
+    p,
+    real.(x),
+    abs2.(final),
+    label=label,
+    linewidth=lw,
+    linestyle=ls,
+    color=color,
+    title=title
+  )
+  show ? display(p) : nothing
+  return p
 end
 
 function plot_final_density!(
-    p,
-    u,
-    sim::Sim{1,Array{ComplexF64}};
-    info = false,
-    doifft = true,
-    label = "initial",
-    lw = 1,
-    ls = :solid,
-    color = :black,
-    show = false,
-)
-    @unpack t, X = sim
-    x = Array(X[1])
-    tmp = u[end]
-    doifft ? final = xspace(tmp, sim) : final = tmp
-    @assert isapprox(ns(final, sim), 1.0, atol = 1e-3)
-    plot!(
-        p,
-        real.(x),
-        abs2.(final),
-        label = label,
-        linewidth = lw,
-        linestyle = ls,
-        color = color,
-    )
-    show ? display(p) : nothing
-    return p
-end
-
-function plot_final_density(
-    u,
-    sim::Sim{3,CuArray{ComplexF64}};
-    axis = 1,
-    info = false,
-    doifft = true,
-    label = "initial",
-    title = "",
-    show = false,
-)
-    # @error "broken"
-    @unpack t, X, dV = sim
-    x = Array(X[axis])
-    dx = x[2] - x[1] |> real
-    ax_list = (1, 2, 3)
-    ax_list = filter(x -> x != axis, ax_list)
-    info && @info size(u)
-    tmp = u[end]
-    doifft ? final = xspace(tmp, sim) : final = tmp
-    @assert isapprox(ns(final, sim), 1.0, atol = 1e-3)
-    final_axial = Array(sum(abs2.(final), dims = ax_list))[:, 1, 1] * dV / dx
-    p = plot(real.(x), final_axial, label = label, title = title)
-    show ? display(p) : nothing
-    return p
-end
-
-function plot_final_density!(
-    p,
-    u,
-    sim::Sim{3,CuArray{ComplexF64}};
-    axis = 1,
-    info = false,
-    doifft = true,
-    label = "initial",
-    show = false,
-)
-    # @error "broken"
-    @unpack t, X = sim
-    x = Array(X[axis])
-    ax_list = (1, 2, 3)
-    ax_list = filter(x -> x != axis, ax_list)
-    final = u[end]
-    doifft ? final = xspace(final, sim) : nothing
-    @assert isapprox(ns(final, sim), 1.0, atol = 1e-3)
-    final_axial = Array(sum(abs2.(final), dims = ax_list))[1, 1, :]
-    plot!(p, real.(x), final_axial, label = label)
-    show ? display(p) : nothing
-    return p
+  p,
+  u,
+  sim::Sim{3,CuArray{ComplexF64}};
+  axis=1,
+  info=false,
+  doifft=true,
+  label="initial",
+  show=false,
+  lw=1,
+  ls=:solid,
+  color=:red,
+  title="_")
+  # @error "broken"
+  @unpack t, X = sim
+  x = Array(X[axis])
+  ax_list = (1, 2, 3)
+  ax_list = filter(x -> x != axis, ax_list)
+  final = u[end]
+  doifft ? final = xspace(final, sim) : nothing
+  @assert isapprox(ns(final, sim), 1.0, atol=1e-3)
+  final_axial = Array(sum(abs2.(final), dims=ax_list))[1, 1, :]
+  plot!(p,
+    real.(x),
+    final_axial,
+    label=label,
+    title=title,
+    linewidth=lw,
+    linestyle=ls,)
+  show ? display(p) : nothing
+  return p
 end
 
 # function animation_final_density(u,sim::Sim{1, Array{ComplexF64}};file="1D_evolution.gif",framerate=30,info=false, doifft=true)

@@ -5,9 +5,8 @@ Output: dictionary with selected
 """
 function load_simulation_list(;
   input_dir = "input/",
-  eqs = [GPE_3D],
+  eqs = [GPE_1D, GPE_3D, NPSE, NPSE_plus],
   verb=true)
-  verb && @warn "GPE_3D not loading"
   sim_dictionary::Array{Sim} = []
   for eq in eqs
     push!(sim_dictionary, load_simulation(input_dir, eq, verb=verb))
@@ -65,7 +64,6 @@ function load_simulation(input_dir, eq::EquationType;
   sim.collapse_threshold = nonlin_df.collapse_threshold[idx_nonlin]
   sim.abstol = precis_df.abstol[idx_precis]
   if eq == GPE_3D
-    verb && @warn size(sim.X)
     x = Array(sim.X[1])
     y = Array(sim.X[2])
     z = Array(sim.X[3])

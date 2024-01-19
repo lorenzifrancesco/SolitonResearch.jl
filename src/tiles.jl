@@ -131,14 +131,15 @@ function get_tile(
               GC.gc()
 
               if plot_finals
-                pp = plot_final_density(
+                pp = plot()
+                plot_final_density!(pp,
                   sol.u,
                   loop_sim;
                   show=false,
                   title=@sprintf("[vx=%3i, bx=%3i]/%3i", vx, bx, tiles)
                 )
                 savefig(pp, "media/checks/final_$(name)_$(vx)_$(bx)_$(tiles).pdf")
-                qq = plot_axial_heatmap(
+                qq = plot_axial_heatmap(qq,
                   sol.u,
                   loop_sim.t,
                   loop_sim;
@@ -163,7 +164,7 @@ function get_tile(
             tran[bx, vx] = ns(final, loop_sim, mask_tran)
             refl[bx, vx] = ns(final, loop_sim, mask_refl)
             maxi[bx, vx] = maxim
-            sane[bx, vx] = 1-tran[bx, vx]+refl[bx, vx]
+            sane[bx, vx] = 1-tran[bx, vx]-refl[bx, vx]
           else
             tran[bx, vx] = NaN
             maxi[bx, vx] = NaN
@@ -243,9 +244,10 @@ function get_tile(
     try
       avg_iteration_time += @elapsed sol = runsim(sim; info=false)
       if plot_finals
-        pp = plot_final_density(sol.u, sim; show=false)
+        pp = plot()
+        pp = plot_final_density!(pp, sol.u, sim; show=false)
         savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
-        qq = plot_axial_heatmap(sol.u, sim.t, sim; show=false)
+        qq = plot_axial_heatmap(qq, sol.u, sim.t, sim; show=false)
         savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
       end
 

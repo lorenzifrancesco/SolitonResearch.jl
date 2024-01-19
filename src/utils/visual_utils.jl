@@ -34,36 +34,6 @@ function show_psi_0(sim::Sim{3,CuArray{Complex{Float64}}})
     display(p)
 end
 
-function explain_sim(sim::Sim{1,Array{Complex{Float64}}})
-    @unpack_Sim sim
-    if iswitch == 1
-        print("\n=== DYNAMICAL SIMULATION ===\n")
-    else
-        print("\n=== STATICAL  SIMULATION ===\n")
-    end
-    print("Equation type: $(equation)\n")
-    if manual
-        print("\t => Manual\n")
-    else
-        print("\t => Automatic\n")
-    end
-    print("\n_________Discretization info_________\n")
-    print("\t Spatial domain: $(L[1])\n")
-    print("\t Spatial points: $(N[1])\n")
-    if iswitch == 1
-        print("\t Time domain: $(ti) to $(tf)\n")
-        print("\t (Time saves: $(Nt))\n")
-    else
-        print("\t Max iters: $(maxiters)\n")
-    end
-    print("\n_________Physical info_______________\n")
-    print("\t g = $(g)\n")
-    print("\t mu = $(mu)\n")
-    print("\t Potential maximum = $(maximum(abs.(V0))), minimum = $(minimum(abs.(V0)))\n")
-    @pack_Sim
-    return nothing
-end
-
 function show_sigma2(psi, sim)
     @unpack_Sim sim
     x = X[1] |> real

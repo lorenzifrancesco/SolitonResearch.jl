@@ -37,7 +37,7 @@ export GPE_1D, NPSE, NPSE_plus, GPE_3D
   @compile_workload begin
     sl = load_simulation_list(verb=false)
     sim = sl[1]
-    prepare_for_collision!(sim, 0.65)
+    # prepare_for_collision!(sim, 0.65)
     csv2color("precompile")
   end
 end
