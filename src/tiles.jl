@@ -59,10 +59,12 @@ function get_tile(
   tran = Array{Float64,2}(undef, (tiles, tiles))
   refl = Array{Float64,2}(undef, (tiles, tiles))
   maxi = Array{Float64,2}(undef, (tiles, tiles))
+  sane = Array{Float64,2}(undef, (tiles, tiles))
   #initialize negative values
   tran = -0.1 * ones((tiles, tiles))
   refl = -0.1 * ones((tiles, tiles))
   maxi = -0.1 * ones((tiles, tiles))
+  sane = -0.1 * ones((tiles, tiles))
 
   sim.iswitch = 1
   tile_dict = load_tile_dictionary()
@@ -73,20 +75,30 @@ function get_tile(
   else
     @info "===============================================\n\t Running tiling subroutine"
     archetype = sim
-    # all sims have the same x
     mask_refl = map(xx -> xx > 0, archetype.X[1] |> real)
     mask_tran = map(xx -> xx < 0, archetype.X[1] |> real)
 
     this_iteration_time = 0.0
     avg_iteration_time = 0.0
     counter = 0
-    iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
 
     print("____________________________________________________________________\n")
     print("|tid| num|   bx|   vx|     dt|   T %|1-T-R %| collapse|   iter time|\n")
     print("____________________________________________________________________")
 
     
+    """
+    thread-local variables: 
+    - collapse_occured
+    - maxim 
+    - sol
+    thread-global
+    - counter  <---- gets written! but the read-write is ATOMIC (too fast to interfere)
+    - archetype
+    - masks
+    - avg_iteration_time <---- idem
+    - tran / refl <--- could have problem when loaded all toghether in chunks (fantasmi del secondo tipo)
+    """
     full_time = @elapsed begin
       Threads.@threads for vx in eachindex(vel_list)
         # @showprogress "Computing all the velocities..." for vx in eachindex(vel_list)
@@ -119,14 +131,15 @@ function get_tile(
               GC.gc()
 
               if plot_finals
-                pp = plot_final_density(
+                pp = plot()
+                plot_final_density!(pp,
                   sol.u,
                   loop_sim;
                   show=false,
                   title=@sprintf("[vx=%3i, bx=%3i]/%3i", vx, bx, tiles)
                 )
                 savefig(pp, "media/checks/final_$(name)_$(vx)_$(bx)_$(tiles).pdf")
-                qq = plot_axial_heatmap(
+                qq = plot_axial_heatmap(qq,
                   sol.u,
                   loop_sim.t,
                   loop_sim;
@@ -151,9 +164,11 @@ function get_tile(
             tran[bx, vx] = ns(final, loop_sim, mask_tran)
             refl[bx, vx] = ns(final, loop_sim, mask_refl)
             maxi[bx, vx] = maxim
+            sane[bx, vx] = 1-tran[bx, vx]-refl[bx, vx]
           else
             tran[bx, vx] = NaN
             maxi[bx, vx] = NaN
+            sane[bx, vx] = NaN
           end
           messages && print("\n" * tile_mess * @sprintf("   %3i|    %3i|      %s|%12.2f|",
                               collapse_occured ? 999 : Int(round(tran[bx, vx] * 100)),
@@ -163,10 +178,12 @@ function get_tile(
                             ))
           counter += 1
 
-          CSV.write("results/runtime_tran.csv", Tables.table(tran))
+          incremental = "Sanity"
+          CSV.write("results/"*incremental*"_tran.csv", Tables.table(tran))
+          CSV.write("results/"*incremental*"_sane.csv", Tables.table(sane))
           # csv2color("runtime_tran")
           if return_maximum
-            CSV.write("results/runtime_maxi.csv", Tables.table(maxi))
+            CSV.write("results/"*incremental*"_maxi.csv", Tables.table(maxi))
             # csv2color("runtime_maxi")
           end
         end # barrier loop
@@ -227,9 +244,10 @@ function get_tile(
     try
       avg_iteration_time += @elapsed sol = runsim(sim; info=false)
       if plot_finals
-        pp = plot_final_density(sol.u, sim; show=false)
+        pp = plot()
+        pp = plot_final_density!(pp, sol.u, sim; show=false)
         savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
-        qq = plot_axial_heatmap(sol.u, sim.t, sim; show=false)
+        qq = plot_axial_heatmap(qq, sol.u, sim.t, sim; show=false)
         savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
       end
 

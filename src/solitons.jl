@@ -3,17 +3,11 @@ Iterate the soliton finding routine over a set of equations.
 Use precomputed values when possible
 """
 function fill_solitons(;
-  eqs = [GPE_1D, NPSE, NPSE_plus])
-
+  eqs = [GPE_3D, GPE_1D],
+  use_precomputed=true)
   sl = load_simulation_list()
-  # sim_dict = [load_simulation("input/", GPE_1D)]
-  # sim = sim_dict[1]
-  # xspace!(sim.psi_0, sim)
-  # kspace!(sim.psi_0, sim)
-  # runsim(sim, info=true)
-  # @info "survived"
   sl = filter(p -> (p.equation in eqs), sl)
-  get_soliton.(sl, use_precomputed=true)
+  get_soliton.(sl, use_precomputed=use_precomputed)
   return
 end
 
@@ -22,7 +16,8 @@ end
 Compute the solitonic ground state for the given Simulation.
 Compare results with ground state dictionary, and eventually use 
 precomputed results. 
-Also print the ground state in human readable CSV file"""
+Also print the ground state in human readable CSV file
+"""
 function get_soliton(
   sim::Sim;
   use_precomputed::Bool=true,
@@ -34,17 +29,8 @@ function get_soliton(
   gs_dict = load_soliton_dictionary()
   gamma_param = g2gamma(sim.g, sim.equation)
   time_requirement = @elapsed begin
-    if haskey(gs_dict, hs(eq.name, gamma_param))
-      if use_precomputed
-        info && @info @sprintf("\t %8s:    |  x  ", sim.name)
-      else
-        delete!(gs_dict, hs(eq.name, gamma_param))
-        sol = runsim(sim; info=info)
-        @info "running"
-        info && @info "total imaginary time $(sol.cnt * sim.dt)"
-        push!(gs_dict, hs(eq.name, gamma_param) => sol.u)
-      end
-    else
+    if !haskey(gs_dict, hs(eq.name, gamma_param)) || !use_precomputed
+      sol = nothing
       try
         sol = runsim(sim; info=info)
       catch err
@@ -56,7 +42,7 @@ function get_soliton(
           throw(err)
         end
       end
-      push!(gs_dict, hs(eq.name, gamma_param) => sol.u)
+      push!(gs_dict, hs(eq.name, gamma_param) => Array(sol.u))
     end
   end
   info && @info @sprintf("Ground state time: %8.4fs", time_requirement)
@@ -92,7 +78,7 @@ function plot_solitons(;
     # TODO improve the waste of time
     sl = load_simulation_list()
     sim = sl[cnt]
-    solution::AbstractArray = v
+    solution::Array{ComplexF64} = v
     plot_final_density!(
       p,
       [solution],

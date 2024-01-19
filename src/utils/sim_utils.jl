@@ -1,26 +1,27 @@
 
 function prepare_for_collision!(sim, gamma; 
   use_precomputed_gs=true, 
-  info=false)
+  info=false,
+  verb=false)
 
   # TODO maybe remove the ground state dictionary, 
   # or make it better with SimSpecsfalse
-  @info "______________________________"
+  verb && @info "______________________________"
   save_path = "results/"
   if isfile(save_path * "gs_dict.jld2")
-    @info "Loading GS library..."
+    verb && @info "Loading GS library..."
     gs_dict = JLD2.load(save_path * "gs_dict.jld2")
   else
-    @info "No GS library found! Saving an empty one..."
+    verb && @info "No GS library found! Saving an empty one..."
     gs_dict = Dict()
     JLD2.save(save_path * "gs_dict.jld2", gs_dict)
   end
 
   name = sim.equation.name
   if haskey(gs_dict, hs(name, gamma)) && use_precomputed_gs
-    @info @sprintf("Found in library item (%s, %3.2f)", name, gamma)
+    verb && @info @sprintf("Found in library item (%s, %3.2f)", name, gamma)
   else
-    @info @sprintf("Computing item (%s, %3.2f)...", name, gamma)
+    verb && @info @sprintf("Computing item (%s, %3.2f)...", name, gamma)
     uu = get_ground_state(sim; info=info)
     push!(gs_dict, hs(name, gamma) => uu)
     JLD2.save(save_path * "gs_dict.jld2", gs_dict)
@@ -46,8 +47,8 @@ function prepare_for_collision!(sim, gamma;
     time_steps = Int(ceil((tf - ti) / dt))
     @pack_Sim! sim
   end
-  @info @sprintf("Done %s", name)
-  @info "______________________________"
+  verb && @info @sprintf("Done %s", name)
+  verb && @info "______________________________"
   nothing
 end
 
@@ -226,20 +227,4 @@ function imprint_vel_set_bar(
   kspace!(psi_0, simc)
   @pack_Sim! simc
   return simc
-end
-
-
-function set_g!(sim::Sim{1,Array{Complex{Float64}}}, gamma_param::Float64=0.4)
-  @unpack_Sim sim
-  g = -2 * gamma_param
-  @pack_Sim! sim
-  return
-end
-
-
-function set_g!(sim::Sim{3,CuArray{Complex{Float64}}}, gamma_param::Float64=0.4)
-  @unpack_Sim sim
-  g = -(4 * pi) * gamma_param
-  @pack_Sim! sim
-  return
 end

@@ -3,13 +3,13 @@ Load the simulation dictionary.
 Input: directory of input files
 Output: dictionary with selected 
 """
-function load_simulation_list(
+function load_simulation_list(;
   input_dir = "input/",
-  eqs = [GPE_1D, NPSE, NPSE_plus],)
-  @warn "GPE_3D not loading"
+  eqs = [GPE_1D, GPE_3D, NPSE, NPSE_plus],
+  verb=true)
   sim_dictionary::Array{Sim} = []
   for eq in eqs
-    push!(sim_dictionary, load_simulation(input_dir, eq))
+    push!(sim_dictionary, load_simulation(input_dir, eq, verb=verb))
   end
   #  sort(sim_dictionary, lt=SolitonDynamics.isless)
   return sim_dictionary
@@ -22,12 +22,13 @@ Input: input configuration directory, equation selection, row of the configurati
 function load_simulation(input_dir, eq::EquationType; 
   idx_domain=1, 
   idx_nonlin=1,
-  idx_precis=1
+  idx_precis=1,
+  verb=false
   )
   domain_df=CSV.read(input_dir*"domain.csv", DataFrame)
   nonlin_df=CSV.read(input_dir*"nonlinearity.csv", DataFrame)
   precis_df=CSV.read(input_dir*"precision.csv", DataFrame)
-  @info @sprintf("Loading %s... \n\tDomain      : %s,\n\tNonlinearity: %s,\n\tPrecis      : %s.", eq.name, domain_df.name[idx_domain], nonlin_df.name[idx_nonlin], precis_df.name[idx_precis])
+  verb && @info @sprintf("Loading %s... \n\tDomain      : %s,\n\tNonlinearity: %s,\n\tPrecis      : %s.", eq.name, domain_df.name[idx_domain], nonlin_df.name[idx_nonlin], precis_df.name[idx_precis])
   if eq == GPE_3D
     L = (domain_df.L_axial[idx_domain], domain_df.L_radial[idx_domain], domain_df.L_radial[idx_domain])
     N = (domain_df.N_axial_3D[idx_domain], domain_df.N_radial[idx_domain], domain_df.N_radial[idx_domain])
@@ -63,7 +64,6 @@ function load_simulation(input_dir, eq::EquationType;
   sim.collapse_threshold = nonlin_df.collapse_threshold[idx_nonlin]
   sim.abstol = precis_df.abstol[idx_precis]
   if eq == GPE_3D
-    @warn size(sim.X)
     x = Array(sim.X[1])
     y = Array(sim.X[2])
     z = Array(sim.X[3])

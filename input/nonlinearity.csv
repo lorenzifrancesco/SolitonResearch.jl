@@ -1,2 +1,6 @@
 name,gamma,initial_width,collapse_threshold
+<<<<<<< HEAD
 std, 0.65,10.0,0.3
+=======
+std, 0.65,10.0,0.25
+>>>>>>> 56ab84b491822295de54da76f93cc6b60d67f63b

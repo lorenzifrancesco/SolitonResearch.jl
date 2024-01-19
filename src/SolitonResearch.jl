@@ -14,7 +14,9 @@ using OrderedCollections
 using Printf
 using LaTeXStrings
 using ProgressBars, ProgressMeter, Colors, ColorSchemes 
+using InteractiveUtils, Base.Filesystem
 using Distributed
+
  
 include("init/_plot_settings.jl")
 include("plotting/plot_axial_evolution.jl")
@@ -31,12 +33,13 @@ include("chempot.jl")
 @exportAll()
 export GPE_1D, NPSE, NPSE_plus, GPE_3D
 
-# @setup_workload begin
-#   @compile_workload begin
-#     @info "entering compile workload"
-#     sd = load_parameters()
-#     # prepare_for_collision!(sd, 0.65)
-#   end
-# end
-
+@setup_workload begin
+  @compile_workload begin
+    sl = load_simulation_list(verb=false)
+    sim = sl[1]
+    # prepare_for_collision!(sim, 0.65)
+    csv2color("precompile")
+  end
 end
+
+end # module
