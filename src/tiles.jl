@@ -59,10 +59,12 @@ function get_tile(
   tran = Array{Float64,2}(undef, (tiles, tiles))
   refl = Array{Float64,2}(undef, (tiles, tiles))
   maxi = Array{Float64,2}(undef, (tiles, tiles))
+  sane = Array{Float64,2}(undef, (tiles, tiles))
   #initialize negative values
-  # tran = -0.1 * ones((tiles, tiles))
-  # refl = -0.1 * ones((tiles, tiles))
-  # maxi = -0.1 * ones((tiles, tiles))
+  tran = -0.1 * ones((tiles, tiles))
+  refl = -0.1 * ones((tiles, tiles))
+  maxi = -0.1 * ones((tiles, tiles))
+  sane = -0.1 * ones((tiles, tiles))
 
   sim.iswitch = 1
   tile_dict = load_tile_dictionary()
@@ -158,14 +160,14 @@ function get_tile(
             final = sol.u[end]
             # @info "Run complete, computing transmission..."
             xspace!(final, loop_sim)
-            for i in 1:5000
-              tran[bx, vx] = i*0.01+ns(final, loop_sim, mask_tran)
-              refl[bx, vx] = i*0.01+ns(final, loop_sim, mask_refl)
-              maxi[bx, vx] = i*0.01+maxim
-            end
+            tran[bx, vx] = ns(final, loop_sim, mask_tran)
+            refl[bx, vx] = ns(final, loop_sim, mask_refl)
+            maxi[bx, vx] = maxim
+            sane[bx, vx] = 1-tran[bx, vx]+refl[bx, vx]
           else
             tran[bx, vx] = NaN
             maxi[bx, vx] = NaN
+            sane[bx, vx] = NaN
           end
           messages && print("\n" * tile_mess * @sprintf("   %3i|    %3i|      %s|%12.2f|",
                               collapse_occured ? 999 : Int(round(tran[bx, vx] * 100)),
@@ -175,10 +177,12 @@ function get_tile(
                             ))
           counter += 1
 
-          CSV.write("results/runtime_tran1.csv", Tables.table(tran))
+          incremental = "Sanity"
+          CSV.write("results/"*incremental*"_tran.csv", Tables.table(tran))
+          CSV.write("results/"*incremental*"_sane.csv", Tables.table(tran))
           # csv2color("runtime_tran")
           if return_maximum
-            CSV.write("results/runtime_maxi1.csv", Tables.table(maxi))
+            CSV.write("results/"*incremental*"_maxi.csv", Tables.table(maxi))
             # csv2color("runtime_maxi")
           end
         end # barrier loop
