@@ -225,7 +225,9 @@ function csv2color(file_name=nothing;
   pyplot()
   if isnothing(file_name)
     file_name = choose_file(path)
+    file_name = file_name[1:end-4]
   end
+  @warn path*file_name
   vals = Tables.matrix(CSV.read(path * file_name * ".csv", DataFrame))
   (vx, bx) = get_pavement_axes(vals)
   p = heatmap(vx, bx, vals, title=file_name, interpolate=false)
@@ -238,7 +240,7 @@ end
   Check if the selected number is valid, and if the item is a file
 """
 function choose_file(path)
-  @printf("Pick a file in <%15s>", path)
+  @printf("Pick a file in <%10s>:\n", path)
   files = readdir(path)
   for (index, file) in enumerate(files)
     println("[$index] $file")
@@ -247,7 +249,7 @@ function choose_file(path)
     user_input = parse(Int, readline())
     chosen_file = files[user_input]
     println("You chose: $chosen_file")
-    @assert isfile(chosen_file)
+    @assert isfile(path*chosen_file)
     return chosen_file
   catch err
     println("Invalid input. Please enter a valid index.")
