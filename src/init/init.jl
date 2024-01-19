@@ -5,7 +5,7 @@ Output: dictionary with selected
 """
 function load_simulation_list(;
   input_dir = "input/",
-  eqs = [GPE_1D, NPSE, NPSE_plus],
+  eqs = [GPE_3D],
   verb=true)
   verb && @warn "GPE_3D not loading"
   sim_dictionary::Array{Sim} = []
