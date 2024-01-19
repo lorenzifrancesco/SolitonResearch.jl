@@ -179,7 +179,7 @@ function get_tile(
 
           incremental = "Sanity"
           CSV.write("results/"*incremental*"_tran.csv", Tables.table(tran))
-          CSV.write("results/"*incremental*"_sane.csv", Tables.table(tran))
+          CSV.write("results/"*incremental*"_sane.csv", Tables.table(sane))
           # csv2color("runtime_tran")
           if return_maximum
             CSV.write("results/"*incremental*"_maxi.csv", Tables.table(maxi))
