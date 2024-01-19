@@ -38,7 +38,7 @@ export GPE_1D, NPSE, NPSE_plus, GPE_3D
     sl = load_simulation_list(verb=false)
     sim = sl[1]
     # prepare_for_collision!(sim, 0.65)
-    csv2color("precompile")
+    # csv2color("precompile")
   end
 end
 
