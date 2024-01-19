@@ -86,7 +86,7 @@ function get_tile(
     print("|tid| num|   bx|   vx|     dt|   T %|1-T-R %| collapse|   iter time|\n")
     print("____________________________________________________________________")
 
-    
+
     """
     thread-local variables: 
     - collapse_occured
@@ -125,7 +125,7 @@ function get_tile(
           # messages && print("\n..."*tile_mess) 
           if !collapse_occured
             try
-              this_iteration_time = @elapsed  (sol, maxim) = runsim(loop_sim; info=infos, return_maximum=return_maximum)
+              this_iteration_time = @elapsed (sol, maxim) = runsim(loop_sim; info=infos, return_maximum=return_maximum)
               avg_iteration_time += this_iteration_time
               # FIXME avoid NPSE+ memory filling problem
               GC.gc()
@@ -164,7 +164,7 @@ function get_tile(
             tran[bx, vx] = ns(final, loop_sim, mask_tran)
             refl[bx, vx] = ns(final, loop_sim, mask_refl)
             maxi[bx, vx] = maxim
-            sane[bx, vx] = 1-tran[bx, vx]-refl[bx, vx]
+            sane[bx, vx] = 1 - tran[bx, vx] - refl[bx, vx]
           else
             tran[bx, vx] = NaN
             maxi[bx, vx] = NaN
@@ -178,18 +178,18 @@ function get_tile(
                             ))
           counter += 1
 
-          incremental = "Sanity"
-          CSV.write("results/"*incremental*"_tran.csv", Tables.table(tran))
-          CSV.write("results/"*incremental*"_sane.csv", Tables.table(sane))
+          incremental = sim.equation.name*""
+          CSV.write("results/" * incremental * "_tran.csv", Tables.table(tran))
+          CSV.write("results/" * incremental * "_sane.csv", Tables.table(sane))
           # csv2color("runtime_tran")
           if return_maximum
-            CSV.write("results/"*incremental*"_maxi.csv", Tables.table(maxi))
+            CSV.write("results/" * incremental * "_maxi.csv", Tables.table(maxi))
             # csv2color("runtime_maxi")
           end
         end # barrier loop
-      # end # spawnat
-      # ipr += 1
-      # ipr = ipr % workers()
+        # end # spawnat
+        # ipr += 1
+        # ipr = ipr % workers()
 
       end # velocities loop
     end

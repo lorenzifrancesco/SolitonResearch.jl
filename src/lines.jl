@@ -72,7 +72,7 @@ function get_lines(
   max_vel = vel_interval(2)
   max_bar = bar_interval(2)
   @warn lines
-  @warn points  
+  @warn points
   # asymmetric matrix: 
   @assert sweep in ["vel", "bar"]
   # TODO fix, very inefficient
@@ -152,17 +152,17 @@ function get_lines(
         end
 
         tile_mess = @sprintf("| %2i|  %3i|  %3i|  %.3f|",
-        Threads.threadid(),
-        ix,
-        iy,
-        loop_sim.dt
+          Threads.threadid(),
+          ix,
+          iy,
+          loop_sim.dt
         )
         messages && print("\n" * tile_mess * @sprintf("   %3i|    %3i|      %s|%12.2f|",
-        collapse_occured ? 999 : Int(round(tran[iy, ix] * 100)),
-        collapse_occured ? 999 : Int(round((1 - tran[iy, ix] - refl[iy, ix]) * 100)),
-        collapse_occured ? "yes" : " no",
-        this_iteration_time
-        ))
+                            collapse_occured ? 999 : Int(round(tran[iy, ix] * 100)),
+                            collapse_occured ? 999 : Int(round((1 - tran[iy, ix] - refl[iy, ix]) * 100)),
+                            collapse_occured ? "yes" : " no",
+                            this_iteration_time
+                          ))
       end
     end
     # TODO save lines
@@ -171,7 +171,7 @@ function get_lines(
   @info "==================================================================="
   @info "Lines time    = " * @sprintf("%.3f", full_time)
   @info "% time in solver = " * @sprintf("%.3f, %.0f %% of lines time", avg_iteration_time, avg_iteration_time / full_time * 100)
-  @info "Single tile time = " * @sprintf("%.3f", avg_iteration_time / lines*points)
+  @info "Single tile time = " * @sprintf("%.3f", avg_iteration_time / lines * points)
   @info "==================================================================="
   print("\n")
   return tran
@@ -195,7 +195,7 @@ function get_lines(
   @assert sweep in ["vel", "bar"]
   if sweep == "vel"
     vel_list = LinRange(vel_interval(1), max_vel, points)
-    bar_list = LinRange(bar_interval(1), max_bar, lines) 
+    bar_list = LinRange(bar_interval(1), max_bar, lines)
     # FIXME find a better way to do this 0.1->1.0
     x_axis = vel_list
     y_axis = bar_list
