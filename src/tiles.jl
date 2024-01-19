@@ -178,7 +178,7 @@ function get_tile(
                             ))
           counter += 1
 
-          incremental = sim.equation.name*""
+          incremental = sim.equation.name*string(tiles)
           CSV.write("results/" * incremental * "_tran.csv", Tables.table(tran))
           CSV.write("results/" * incremental * "_sane.csv", Tables.table(sane))
           # csv2color("runtime_tran")
