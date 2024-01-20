@@ -231,7 +231,7 @@ function csv2color(file_name=nothing;
   end
   vals = Tables.matrix(CSV.read(path * file_name * ".csv", DataFrame))
   (vx, bx) = get_pavement_axes(vals)
-  p = heatmap(vx, bx, vals, title=file_name, interpolate=false)
+  p = heatmap(vx, bx, vals, title=file_name, interpolate=false, c=:thermal)
   savefig(p, "media/Color_" * file_name * ".pdf")
   nothing
 end
