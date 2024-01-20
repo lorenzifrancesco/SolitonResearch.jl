@@ -178,7 +178,7 @@ function get_tile(
                             ))
           counter += 1
 
-          incremental = "plottis_"*sim.equation.name*string(tiles)
+          incremental = "more_precise_"*sim.equation.name*string(tiles)
           CSV.write("results/" * incremental * "_tran.csv", Tables.table(tran))
           CSV.write("results/" * incremental * "_sane.csv", Tables.table(sane))
           # csv2color("runtime_tran")
@@ -247,7 +247,7 @@ function get_tile(
         pp = plot()
         pp = plot_final_density!(pp, sol.u, sim; show=false)
         savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
-        qq = plot_axial_heatmap(qq, sol.u, sim.t, sim; show=false)
+        qq = plot_axial_heatmap(sol.u, sim.t, sim; show=false)
         savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
       end
 
