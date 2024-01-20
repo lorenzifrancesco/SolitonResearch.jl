@@ -2,12 +2,12 @@
   Set the simulations extremes in terms of velocity 
 """
 function bar_interval(i)
-  extremes = [0.0, 0.25]
+  extremes = [0.0, 1.0]
   return extremes[i]
 end
 
 function vel_interval(i)
-  extremes = [0.2, 0.4]
+  extremes = [0.1, 1.0]
   return extremes[i]
 end
 
@@ -49,7 +49,7 @@ function fill_lines(
     else
       # launch the line methods
       line = get_lines(sim, name;
-        lines=2,
+        lines=1,
         sweep="bar",
         points=20)
 
