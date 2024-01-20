@@ -139,7 +139,7 @@ function get_tile(
                   title=@sprintf("[vx=%3i, bx=%3i]/%3i", vx, bx, tiles)
                 )
                 savefig(pp, "media/checks/final_$(name)_$(vx)_$(bx)_$(tiles).pdf")
-                qq = plot_axial_heatmap(qq,
+                qq = plot_axial_heatmap(
                   sol.u,
                   loop_sim.t,
                   loop_sim;
@@ -178,7 +178,7 @@ function get_tile(
                             ))
           counter += 1
 
-          incremental = sim.equation.name*string(tiles)
+          incremental = "plottis_"*sim.equation.name*string(tiles)
           CSV.write("results/" * incremental * "_tran.csv", Tables.table(tran))
           CSV.write("results/" * incremental * "_sane.csv", Tables.table(sane))
           # csv2color("runtime_tran")

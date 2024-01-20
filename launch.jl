@@ -7,11 +7,15 @@ print(read(cmd, String))
 print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 
 # TODO load configuration from input
-N = 20
-return_maximum = true
-@printf("N=%i, return_maximum=%d", N, return_maximum)
 print("\n=================================================================\n")
 print(get_current_commit_data())
 print("=================================================================\n")
-fill_tiles(number_of_tiles=N, eqs=[NPSE_plus], return_maximum=return_maximum)
+N = 20
+return_maximum = true
+@printf("==============      N=%i, return_maximum=%d       ==============\n", N, return_maximum)
+fill_tiles(number_of_tiles=N, eqs=[NPSE_plus], return_maximum=return_maximum, plot_finals=true)
+
+print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+cmd = `date`
+print(read(cmd, String))
 print("\n@@@@@@@@@@@@@@@@@@@@@@@@@@@ END OF RUN @@@@@@@@@@@@@@@@@@@@@@@@@@@@\n")

@@ -98,5 +98,8 @@ function load_simulation(input_dir, eq::EquationType;
   end
   kspace!(sim.psi_0, sim)
   @assert isapprox(nsk(sim.psi_0, sim), 1.0, rtol=1.0e-9)
+  sim.color = get_color(sim.equation)
+  sim.linestyle = get_linestyle(sim.equation)
+  sim.name = paper_name(sim.equation)
   return sim
 end
