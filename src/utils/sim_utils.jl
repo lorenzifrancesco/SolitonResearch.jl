@@ -101,7 +101,6 @@ function imprint_vel_set_bar!(
   @. psi_0 = abs(psi_0) * exp(-im * (x) * vv)
   kspace!(psi_0, sim)
   @pack_Sim! sim
-  @warn sim.t
   nothing
 end
 

@@ -73,7 +73,6 @@ function load_simulation(input_dir, eq::EquationType;
   if precis_df.no_saves[idx_precis]
     sim.Nt = 2
   else
-    @warn "hit"
     sim.Nt = precis_df.N_saves[idx_precis]
   end
   sim.tf = 2.0
