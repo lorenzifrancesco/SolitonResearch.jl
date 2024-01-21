@@ -7,7 +7,7 @@ function bar_interval(i)
 end
 
 function vel_interval(i)
-  extremes = [0.1, 1.0]
+  extremes = [1.0, 7.0]
   return extremes[i]
 end
 
@@ -17,7 +17,10 @@ end
 function fill_lines(
   gamma=0.65;
   use_precomputed_lines=false,
-  eqs=[NPSE_plus])
+  plot_finals=false,
+  eqs=[NPSE_plus],
+  n_lines=1,
+  n_points=20)
   if Threads.nthreads() == 1
     @warn "running in single thread mode!"
   else
@@ -49,9 +52,10 @@ function fill_lines(
     else
       # launch the line methods
       line = get_lines(sim, name;
-        lines=1,
+        lines=n_lines,
         sweep="bar",
-        points=20)
+        points=n_points,
+        plot_finals=plot_finals)
 
       push!(line_dict, hs(name, gamma) => line)
       JLD2.save(save_path * "line_dict.jld2", line_dict)
@@ -66,7 +70,8 @@ function get_lines(
   lines=2,
   sweep="vel",
   points=100,
-  messages=true
+  messages=true,
+  plot_finals=false
 )
   saveto = "../media/lines_$(name).pdf"
   max_vel = vel_interval(2)
@@ -139,6 +144,24 @@ function get_lines(
           else
             throw(err)
           end
+        end
+        if plot_finals
+          pp = plot()
+          plot_final_density!(pp,
+            sol.u,
+            loop_sim;
+            show=false,
+            title=@sprintf("[vx=%3i, bx=%3i]", ix, iy)
+          )
+          savefig(pp, "media/checks/AAA_fantasmi_FI_$(name)_$(ix)_$(iy).pdf")
+          qq = plot_axial_heatmap(
+            sol.u,
+            loop_sim.t,
+            loop_sim;
+            show=false,
+            title=@sprintf("[vx=%i, bx=%i]/%i", ix, iy)
+          )
+          savefig(qq, "media/checks/AAA_fantasmi_HT_$(name)_$(ix)")
         end
 
         @assert loop_sim.manual == true
@@ -300,10 +323,12 @@ function view_all_lines(; sweep="bar")
     elseif sweep == "bar"
       p = plot(xlabel="barrier", ylabel="T", title=ihs(k))
       x = LinRange(bar_interval(1), bar_interval(2), length(v[1, :]))
-      y = LinRange(vel_interval(1), vel_interval(2), length(v[:, 1]))
+      # y = LinRange(vel_interval(1), vel_interval(2), length(v[:, 1]))
+      y = [vel_interval(1)]
     end
     for iy = 1:size(v)[1]
       plot!(p, collect(x), v[iy, :], label=string(iy))
+      scatter!(p, collect(x), v[iy, :])
     end
     savefig(p, "media/lines_" * string(ihs(k)) * ".pdf")
     #  display(p)

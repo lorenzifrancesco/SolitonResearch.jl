@@ -1,6 +1,6 @@
 
-function prepare_for_collision!(sim, gamma; 
-  use_precomputed_gs=true, 
+function prepare_for_collision!(sim, gamma;
+  use_precomputed_gs=true,
   info=false,
   verb=false)
 
@@ -62,15 +62,15 @@ function imprint_vel_set_bar!(
   bw::Float64=0.5,
   dt_set::Float64=0.01,
   time_step_limit::Int64=5000,
-  save_each::Bool = false
+  save_each::Bool=false
 )
 
   @unpack_Sim sim
   x = X[1] |> real
   @. V0 = bb * exp(-(x / bw)^2 / 2) # central barrier
   @info @sprintf("barrier width         bw=%8.4f", bw)
-  @info @sprintf("barrier crossing time t*=%8.4f", bw/vv)
-  @info @sprintf("Nt in crossing period Nt=%8.4f", bw/vv/dt_set)
+  @info @sprintf("barrier crossing time t*=%8.4f", bw / vv)
+  @info @sprintf("Nt in crossing period Nt=%8.4f", bw / vv / dt_set)
   x0 = L[1] / 4
   if sim.equation == NPSE_plus
     x0 = L[1] / 8
@@ -90,12 +90,10 @@ function imprint_vel_set_bar!(
     dt = (tf - ti) / time_steps
     @warn @sprintf("t_steps > %i, clipped dt=%0.4f", time_step_limit, dt)
   else
-    dt = dt_set 
+    dt = dt_set
   end
   if save_each
     Nt = time_steps
-  else
-    Nt = 2
   end
   t = LinRange(ti, tf, Nt)
   xspace!(psi_0, sim)
