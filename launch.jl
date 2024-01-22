@@ -10,7 +10,7 @@ print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 print("\n=================================================================\n")
 print(get_current_commit_data())
 print("=================================================================\n")
-N = 20
+N = 50
 return_maximum = true
 @printf("==============      N=%i, return_maximum=%d       ================\n", N, return_maximum)
 fill_tiles(number_of_tiles=N, eqs=[NPSE_plus], return_maximum=return_maximum)
