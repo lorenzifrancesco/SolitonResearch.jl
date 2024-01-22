@@ -60,12 +60,11 @@ function imprint_vel_set_bar!(
   vv::Float64=0.0,
   bb::Float64=0.0,
   bw::Float64=0.5,
-  dt_set::Float64=0.01,
   time_step_limit::Int64=5000,
   save_each::Bool=false
 )
-
   @unpack_Sim sim
+  dt_set = sim.dt
   x = X[1] |> real
   @. V0 = bb * exp(-(x / bw)^2 / 2) # central barrier
   @info @sprintf("barrier width         bw=%8.4f", bw)
@@ -73,7 +72,7 @@ function imprint_vel_set_bar!(
   @info @sprintf("Nt in crossing period Nt=%8.4f", bw / vv / dt_set)
   x0 = L[1] / 4
   if sim.equation == NPSE_plus
-    x0 = L[1] / 8
+    x0 = L[1] / 4
   else
     x0 = L[1] / 4
   end

@@ -1,21 +1,23 @@
 using SolitonResearch, SolitonDynamics
-using Plots
+using Plots; pyplot()
 
 function runna(sim, vx, bx)
   ## select the nasty simulation parameters
   total = 20
   imprint_vel_set_bar!(sim, vv=vx/total, bb=bx/total)
-  return runsim(sim, info=true)
+  # sim.time_steps=100
+  return runsim(sim, info=true, return_maximum=true)
 end
 
 
 function lesgo(
   vx=20,
-  bx=4
+  bx=15
   )
   sim = load_simulation("input/", NPSE_plus)
   sim.Nt
-  prepare_for_collision!(sim, 0.65)
+  prepare_for_collision!(sim, 0.65, use_precomputed_gs=true)
+  # show_psi_0(sim)
   @time (sol, maxi) = runna(sim, vx, bx)
   @info "======== ENDED ========="
 

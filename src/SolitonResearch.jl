@@ -33,13 +33,13 @@ include("chempot.jl")
 @exportAll()
 export GPE_1D, NPSE, NPSE_plus, GPE_3D
 
-@setup_workload begin
-  @compile_workload begin
-    sl = load_simulation_list(verb=false)
-    sim = sl[1]
-    # prepare_for_collision!(sim, 0.65)
-    # csv2color("precompile")
-  end
-end
+# @setup_workload begin
+#   @compile_workload begin
+#     sl = load_simulation_list(verb=false)
+#     sim = sl[1]
+#     # prepare_for_collision!(sim, 0.65)
+#     # csv2color("precompile")
+#   end
+# end
 
 end # module

@@ -69,7 +69,7 @@ function get_tile(
   sim.iswitch = 1
   tile_dict = load_tile_dictionary()
   messages && @info "\tSetting ground state..."
-  prepare_for_collision!(sim, gamma; use_precomputed_gs=true)
+  prepare_for_collision!(sim, gamma; use_precomputed_gs=false)
   if haskey(tile_dict, hs(name, gamma)) && use_precomputed
     messages && @info "Already found tile for " equation, gamma
   else
