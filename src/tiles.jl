@@ -51,8 +51,8 @@ function get_tile(
     @warn "Plotting finals!"
   end
   saveto = "../media/tiles_$(name).pdf"
-  max_vel = 1
-  max_bar = 1
+  max_vel = 2.0
+  max_bar = 2.0
   #
   vel_list = LinRange(0.1, max_vel, tiles)
   bar_list = LinRange(0, max_bar, tiles)
