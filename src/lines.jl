@@ -17,6 +17,7 @@ end
 function fill_lines(
   gamma=0.65;
   use_precomputed_lines=false,
+  use_precomputed_gs=false,
   plot_finals=false,
   eqs=[NPSE_plus],
   n_lines=1,
@@ -29,10 +30,10 @@ function fill_lines(
 
   save_path = "results/"
 
-  sl = load_simulation_list()
+  sl = load_simulation_list(eqs=eqs)
   sl = filter(p -> (p.equation in eqs), sl)
   prepare_for_collision!.(sl, gamma;
-    use_precomputed_gs=true)
+    use_precomputed_gs=use_precomputed_gs)
 
   # TODO to be inserted into function
   if isfile(save_path * "line_dict.jld2")
