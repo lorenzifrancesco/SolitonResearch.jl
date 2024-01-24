@@ -19,7 +19,7 @@ function fill_lines(
   use_precomputed_lines=false,
   use_precomputed_gs=false,
   plot_finals=false,
-  eqs=[NPSE_plus],
+  eqs=[NPSE],
   n_lines=1,
   n_points=20)
   if Threads.nthreads() == 1
@@ -340,7 +340,7 @@ end
 """
   More sophisticated plotting
 """
-function plot_lines(number_of_lines=4, sweep="bar")
+function plot_lines(number_of_lines=1, sweep="bar")
   # pyplot(size=(350, 220))
   for i = 1:number_of_lines
     compare_all_lines(slice_choice=i, sweep=sweep)
@@ -364,11 +364,12 @@ function compare_all_lines(; slice_choice=1, sweep="bar")
   cnt = 1
   @info keys(ld)
   delete!(ld, hs("CQ", 0.65))
-  delete!(ld, hs("G1", 0.65))
+  # delete!(ld, hs("G1", 0.65))
   for (k, v) in ld
     @info "found" ihs(k)
     # for iy in 1:size(v)[1]
-    if true
+    choice = v[slice_choice, :]
+    if false
       if slice_choice == 2
         if ihs(k)[1] == "G3"
           choice[32:end] = ones(50 - 31) * NaN
