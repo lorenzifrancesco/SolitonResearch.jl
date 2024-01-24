@@ -339,7 +339,7 @@ end
 """
   More sophisticated plotting
 """
-function plot_all_lines(number_of_lines=4, sweep="bar")
+function plot_lines(number_of_lines=4, sweep="bar")
   # pyplot(size=(350, 220))
   for i = 1:number_of_lines
     compare_all_lines(slice_choice=i, sweep=sweep)

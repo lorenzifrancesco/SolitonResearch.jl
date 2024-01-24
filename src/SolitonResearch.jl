@@ -29,7 +29,7 @@ include("solitons.jl")
 include("lines.jl")
 include("tiles.jl")
 include("chempot.jl")
-
+include("paper.jl")
 @exportAll()
 export GPE_1D, NPSE, NPSE_plus, GPE_3D
 

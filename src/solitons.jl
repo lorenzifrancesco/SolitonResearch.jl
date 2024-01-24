@@ -3,7 +3,7 @@ Iterate the soliton finding routine over a set of equations.
 Use precomputed values when possible
 """
 function fill_solitons(;
-  eqs=[GPE_3D, GPE_1D],
+  eqs=[GPE_3D, GPE_1D, NPSE, NPSE_plus],
   use_precomputed=true)
   sl = load_simulation_list()
   sl = filter(p -> (p.equation in eqs), sl)
@@ -42,7 +42,7 @@ function get_soliton(
           throw(err)
         end
       end
-      push!(gs_dict, hs(eq.name, gamma_param) => sol.u)
+      push!(gs_dict, hs(eq.name, gamma_param) => Array(sol.u))
     end
   # end
   info && @info @sprintf("Ground state time: %8.4fs", time_requirement)
@@ -52,7 +52,6 @@ function get_soliton(
   human_readable_soliton()
   nothing
 end
-
 
 """
 Load solitons from file and plot a single figure 
@@ -68,7 +67,6 @@ function plot_solitons(;
 
   soliton_dict = load_soliton_dictionary(info=info)
   human_readable_soliton()
-
   # pyplot(size=(359, 220))
   p = plot()
   @assert is_gamma_uniform(soliton_dict)
@@ -79,7 +77,11 @@ function plot_solitons(;
     sim = sl[findall(x -> x.equation.name == ihs(k)[1], sl)[1]]
     @warn ihs(k)
     @warn sim.color
-    solution::AbstractArray{ComplexF64} = v
+    if ihs(k)[1]=="G3"
+      solution = CuArray(v)
+    else
+      solution = v
+    end
     plot_final_density!(
       p,
       [solution],
@@ -87,7 +89,7 @@ function plot_solitons(;
       label=sim.name,
       color=sim.color,
       ls=sim.linestyle,
-      show=true
+      show=false
     )
     @warn sim.linestyle
     cnt += 1
@@ -116,7 +118,6 @@ function plot_solitons(;
   save_plots ? savefig(p, "media/" * string(gamma) * "_ground_states_zoom.pdf") : nothing
   nothing
 end
-
 
 """
 Check if all the solitons stored in the dictionary share the same gamma

@@ -68,8 +68,13 @@ function human_readable_soliton(
       CSV.write(human_folder * file_name * gs_file, Tables.table(gs))
       gs_file = name * "_abs2.csv" ## name, not gamma
       CSV.write(human_folder * file_name * gs_file, Tables.table(abs2.(gs)))
-    else name
-      @info "Not humanizing GPE_3D soliton"
+    else 
+      # dyz = real((sim.X[1][2]-sim.X[1][1])*(sim.X[2][2]-sim.X[2][1]))
+      # gs_axial = [sum(abs2.(x), dims=ax_list)[:, 1, 1] for x in ux]
+      # gs_file = name * "_complex.csv" ## name, not gamma
+      # CSV.write(human_folder * file_name * gs_file, Tables.table(gs))
+      # gs_file = name * "_abs2.csv" ## name, not gamma
+      # CSV.write(human_folder * file_name * gs_file, Tables.table(abs2.(gs)))
     end
   end
   nothing

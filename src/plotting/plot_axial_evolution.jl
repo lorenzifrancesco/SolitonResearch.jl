@@ -96,7 +96,8 @@ function plot_final_density!(
   final = u[end]
   doifft ? final = xspace(final, sim) : nothing
   @assert isapprox(ns(final, sim), 1.0, atol=1e-3)
-  final_axial = Array(sum(abs2.(final), dims=ax_list))[:, 1, 1]
+  dydz = (X[2][2]-X[2][1])*(X[3][2]-X[3][1]) |> real
+  final_axial = Array(sum(abs2.(final)*dydz, dims=ax_list))[:, 1, 1]
   plot!(p,
     real.(x),
     final_axial,
