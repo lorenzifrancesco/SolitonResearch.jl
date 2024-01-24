@@ -1,8 +1,8 @@
 function compare_chempot(; use_precomputed=false, take_advantage=true)
   # pyplot(size=(350, 220))
-  sl = load_simulation_list(eqs=[NPSE_plus])
-  N_samples = 10
-  gamma_range = LinRange(0.0, 1.0, N_samples)
+  sl = load_simulation_list(eqs=[GPE_1D,NPSE_plus, NPSE, GPE_3D])
+  N_samples = 20
+  gamma_range = LinRange(0.1, 1.0, N_samples) # TODO
   p = plot(xlabel=L"\gamma", ylabel=L"\mu")
 
   if isfile("results/mu_db.jld2")

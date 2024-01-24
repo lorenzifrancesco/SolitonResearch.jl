@@ -3,7 +3,7 @@ Iterate the soliton finding routine over a set of equations.
 Use precomputed values when possible
 """
 function fill_solitons(;
-  eqs=[GPE_3D, GPE_1D, NPSE, NPSE_plus],
+  eqs=[GPE_3D],
   use_precomputed=true)
   sl = load_simulation_list()
   sl = filter(p -> (p.equation in eqs), sl)
@@ -28,11 +28,12 @@ function get_soliton(
   eq = sim.equation
   gs_dict = load_soliton_dictionary()
   gamma_param = g2gamma(sim.g, eq)
+  maxim = 0.0
+  sol = CustomSolution([0.0], [0.0], [0.0], 0.0)
   # time_requirement = @elapsed begin
     if !haskey(gs_dict, hs(eq.name, gamma_param)) || !use_precomputed
-      sol = nothing
       try
-        sol = runsim(sim; info=info)
+        (sol, maxim) = runsim(sim; info=info)
       catch err
         if isa(err, NpseCollapse)
           @warn "NPSE   Collapse"
@@ -42,14 +43,13 @@ function get_soliton(
           throw(err)
         end
       end
-      push!(gs_dict, hs(eq.name, gamma_param) => Array(sol.u))
+      @info size(sol.u[end])
+      push!(gs_dict, hs(eq.name, gamma_param) => Array(sol.u[end]))
     end
   # end
   info && @info @sprintf("Ground state time: %8.4fs", time_requirement)
-  solution = gs_dict[hs(eq.name, gamma_param)]
-
   JLD2.save(join([save_path, "gs_dict.jld2"]), gs_dict)
-  human_readable_soliton()
+  # human_readable_soliton()
   nothing
 end
 
@@ -69,6 +69,7 @@ function plot_solitons(;
   human_readable_soliton()
   # pyplot(size=(359, 220))
   p = plot()
+  s = plot()
   @assert is_gamma_uniform(soliton_dict)
   gamma = ihs(first(soliton_dict)[1])[2]
   cnt = 1
@@ -91,7 +92,18 @@ function plot_solitons(;
       ls=sim.linestyle,
       show=false
     )
-    @warn sim.linestyle
+
+    sigma = estimate_sigma2k(solution, sim)
+    plot!(s, 
+          real(sim.X[1]),
+          sigma,
+          label=sim.name,
+          color=sim.color,
+          ls=sim.linestyle,
+          show=false,
+    )
+    plot!(s, xlims=(-10, 10))
+
     cnt += 1
   end
   @info "special case for gamma = 0.65"
@@ -109,7 +121,7 @@ function plot_solitons(;
     display(p)
   end
   save_plots ? savefig(p, "media/" * string(gamma) * "_ground_states.pdf") : nothing
-
+  save_plots ? savefig(s, "media/" * string(gamma) * "_sigma.pdf") : nothing
   # zoomed version
   if show_plots
     display(p)
@@ -164,7 +176,10 @@ Simple method to utilize the ground states
 """
 function get_ground_state(sim; info=false)
   sim.iswitch = -im
-  res = Array(runsim(sim; info=info).u)
+  (sol, maxi) = runsim(sim; info=info)
+  res = Array(sol.u[end])
   @assert size(res) == sim.N
   return res
 end
+
+

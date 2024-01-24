@@ -1,2 +1,2 @@
 name,L_axial,L_radial,N_axial_1D,N_axial_3D,N_radial,dt,max_iters
-std, 40.0,10.0,256,256,40,0.01,1e10
+std, 40.0,10.0,512,512,40,0.01,1e10

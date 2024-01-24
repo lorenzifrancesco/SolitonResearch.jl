@@ -10,14 +10,14 @@ collapse validation
 function fill_tiles(;
   return_maximum=false,
   number_of_tiles=20,
-  eqs=[GPE_1D],
+  eqs=[NPSE_plus],
   plot_finals=false,
   gamma=0.65
 )
   if Threads.nthreads() == 1
     @warn "running in single thread mode!"
   end
-  sl = load_simulation_list()
+  sl = load_simulation_list(eqs=eqs)
   sl = filter(p -> (p.equation in eqs), sl)
   get_tile.(sl,
     tiles=number_of_tiles,
