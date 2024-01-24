@@ -101,7 +101,7 @@ end
 
 function plot_tiles(matrix=nothing)
   # pyplot(size=(300, 220))
-  # pyplot(size=(300, 260))
+  pyplot(size=(300, 260))
   # backend(:pyplot)
   tile_file = "results/tile_dict.jld2"
   @assert isfile(tile_file)
@@ -149,7 +149,7 @@ function plot_pavement(
     left_margin=0 * Plots.mm,
     right_margin=0 * Plots.mm,
   )
-  plot!(ht2, vaxis, vaxis .^ 2)
+  # plot!(ht2, vaxis, vaxis .^ 2)
   savefig(ht2, "media/tiles_" * string(ihs(k)) * "_ht.pdf")
   # v, mask = process_tiles(v)
   mask = v

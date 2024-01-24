@@ -76,8 +76,7 @@ function plot_solitons(;
   sl = load_simulation_list()
   for (k, v) in soliton_dict
     sim = sl[findall(x -> x.equation.name == ihs(k)[1], sl)[1]]
-    @warn ihs(k)
-    @warn sim.color
+    @info ihs(k)
     if ihs(k)[1]=="G3"
       solution = CuArray(v)
     else
@@ -92,8 +91,15 @@ function plot_solitons(;
       ls=sim.linestyle,
       show=false
     )
-
+    
     sigma = estimate_sigma2k(solution, sim)
+    if ihs(k)[1] == "G3"
+      # show_slice(0.0, sim.psi_0, sim)
+      # show_profile(0.0, sim.psi_0, sim)
+      @warn @sprintf("Pushing the sigma of : %12.8f", 1-sigma[1]) 
+      # sigma .= sigma .+ (1-sigma[1])
+    end
+    # @warn sigma
     plot!(s, 
           real(sim.X[1]),
           sigma,
@@ -102,7 +108,10 @@ function plot_solitons(;
           ls=sim.linestyle,
           show=false,
     )
-    plot!(s, xlims=(-10, 10))
+    plot!(s, xlims=(-10.0, 10.0),
+          ylims=(0.60, 1.0),
+          xlabel=L"x", 
+          ylabel=L"\sigma^2")
 
     cnt += 1
   end

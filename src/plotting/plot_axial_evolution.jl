@@ -5,7 +5,7 @@ function plot_axial_heatmap(
   info=false,
   doifft=true,
   show=false,
-  title="__",
+  title="",
   path="media/"
 )
   @unpack t, X = sim
@@ -26,7 +26,7 @@ function plot_axial_heatmap(
   info=false,
   doifft=true,
   show=false,
-  title="_",
+  title="",
 )
   @unpack t, X = sim
   x = Array(X[axis])
@@ -54,7 +54,7 @@ function plot_final_density!(
   ls=:solid,
   color=:black,
   show=false,
-  title="_"
+  title=""
 )
   @unpack t, X = sim
   x = Array(X[1])
@@ -87,7 +87,7 @@ function plot_final_density!(
   lw=1,
   ls=:solid,
   color=:red,
-  title="_")
+  title="")
   # @error "broken"
   @unpack t, X = sim
   x = Array(X[axis])

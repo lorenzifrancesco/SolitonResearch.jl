@@ -19,7 +19,7 @@ function fill_lines(
   use_precomputed_lines=false,
   use_precomputed_gs=false,
   plot_finals=false,
-  eqs=[NPSE],
+  eqs=[GPE_3D, GPE_1D, NPSE, NPSE_plus],
   n_lines=1,
   n_points=20)
   if Threads.nthreads() == 1
@@ -66,19 +66,18 @@ end
 
 
 function get_lines(
-  sim::Sim{1,Array{Complex{Float64}}},
+  archetype::Sim,
   name::String="noname";
   lines=2,
   sweep="vel",
   points=100,
   messages=true,
-  plot_finals=false
-)
-  saveto = "../media/lines_$(name).pdf"
+  plot_finals=false)
+
   max_vel = vel_interval(2)
   max_bar = bar_interval(2)
-  @warn lines
-  @warn points
+  @warn "lines: " lines
+  @warn "points: " points
   # asymmetric matrix: 
   @assert sweep in ["vel", "bar"]
   # TODO fix, very inefficient
@@ -109,10 +108,6 @@ function get_lines(
   end
   tran = Array{Float64,2}(undef, (lines, points))
   refl = Array{Float64,2}(undef, (lines, points))
-
-  @info "Filling sim grid..."
-  sgrid = Array{Sim,2}(undef, (lines, points))
-  archetype = sim
 
   # all sims have the same x
   mask_refl = map(xx -> xx > 0, archetype.X[1] |> real)
@@ -202,110 +197,124 @@ function get_lines(
 end
 
 
-"""
-in the 3D case we do not have sufficient GPU mem, so we go serially
-"""
-function get_lines(
-  archetype::Sim{3,CuArray{Complex{Float64}}},
-  name::String="noname";
-  lines=2,
-  sweep="vel",
-  points=100,)
-  saveto = "../media/lines_$(name).pdf"
-  max_vel = vel_interval(2)
-  max_bar = bar_interval(2)
-  #
-  # asymmetric matrix: 
-  @assert sweep in ["vel", "bar"]
-  if sweep == "vel"
-    vel_list = LinRange(vel_interval(1), max_vel, points)
-    bar_list = LinRange(bar_interval(1), max_bar, lines)
-    # FIXME find a better way to do this 0.1->1.0
-    x_axis = vel_list
-    y_axis = bar_list
-  elseif sweep == "bar"
-    vel_list = LinRange(vel_interval(1), max_vel, lines)
-    bar_list = LinRange(bar_interval(1), max_bar, points)
-    x_axis = bar_list
-    y_axis = vel_list
-  end
-  tran = Array{Float64,2}(undef, (lines, points))
-  refl = Array{Float64,2}(undef, (lines, points))
+# """
+# in the 3D case we do not have sufficient GPU mem, so we go serially
+# """
+# function get_lines(
+#   archetype::Sim{3,CuArray{Complex{Float64}}},
+#   name::String="noname";
+#   lines=2,
+#   sweep="vel",
+#   points=100,
+#   messages=true, 
+#   plot_finals=false)
+
+#   max_vel = vel_interval(2)
+#   max_bar = bar_interval(2)
+#   #
+#   # asymmetric matrix: 
+#   @assert sweep in ["vel", "bar"]
+#   if lines > 1
+#     if sweep == "vel"
+#       vel_list = LinRange(vel_interval(1), max_vel, points)
+#       bar_list = LinRange(bar_interval(1), max_bar, lines)
+#       x_axis = vel_list
+#       y_axis = bar_list
+#     elseif sweep == "bar"
+#       vel_list = LinRange(vel_interval(1), max_vel, lines)
+#       bar_list = LinRange(bar_interval(1), max_bar, points)
+#       x_axis = bar_list
+#       y_axis = vel_list
+#     end
+#   elseif lines == 1
+#     if sweep == "vel"
+#       vel_list = LinRange(vel_interval(1), max_vel, points)
+#       bar_list = [bar_interval(1)]
+#       x_axis = vel_list
+#       y_axis = bar_list
+#     elseif sweep == "bar"
+#       vel_list = [vel_interval(1)]
+#       bar_list = LinRange(bar_interval(1), max_bar, points)
+#       x_axis = bar_list
+#       y_axis = vel_list
+#     end
+#   end
+#   tran = Array{Float64,2}(undef, (lines, points))
+#   refl = Array{Float64,2}(undef, (lines, points))
 
 
-  @info "Proceeding serially from the archetype..."
-  # all sims have the same x
-  mask_refl = map(xx -> xx > 0, archetype.X[1] |> real)
-  mask_tran = map(xx -> xx < 0, archetype.X[1] |> real)
+#   # all sims have the same x
+#   mask_refl = map(xx -> xx > 0, archetype.X[1] |> real)
+#   mask_tran = map(xx -> xx < 0, archetype.X[1] |> real)
 
-  @info "Running lining..."
-  avg_iteration_time = 0.0
-  iter = Iterators.product(enumerate(y_axis), enumerate(x_axis))
-  full_time = @elapsed for ((iy, y), (ix, x)) in ProgressBar(iter)
-    sim = deepcopy(archetype)
-    collapse_occured = false
-    if sweep == "vel"
-      imprint_vel_set_bar!(sim; vv=x, bb=y)
-    elseif sweep == "bar"
-      imprint_vel_set_bar!(sim; vv=y, bb=x)
-    end
-    sol = nothing
-    try
-      avg_iteration_time += @elapsed sol = runsim(sim; info=false)
-    catch err
-      if isa(err, NpseCollapse) || isa(err, Gpe3DCollapse)
-        collapse_occured = true
-      else
-        throw(err)
-      end
-    end
-    # catch maxiters hit and set the transmission to zero
-    if sim.manual == false
-      if sol.retcode != ReturnCode.Success
-        @info "Run complete, computing transmission..."
-        @info "Detected solver failure"
-        tran[iy, ix] = 0.0
-        refl[iy, ix] = 1.0
-        @info "T = " tran[iy, ix]
-      else
-        if !collapse_occured
-          final = sol.u[end]
-          @info "Run complete, computing transmission..."
-          xspace!(final, sim)
-          tran[iy, ix] = ns(final, sim, mask_tran)
-          refl[iy, ix] = ns(final, sim, mask_refl)
-        else
-          @info "Run complete, detected collapse..."
-          tran[iy, ix] = NaN
-        end
-        @info "T = " tran[iy, ix]
-      end
-    else
-      if !collapse_occured
-        final = sol.u[end]
-        @info "Run complete, computing transmission..."
-        xspace!(final, sim)
-        tran[iy, ix] = ns(final, sim, mask_tran)
-        refl[iy, ix] = ns(final, sim, mask_refl)
-      else
-        @info "Run complete, detected collapse..."
-        tran[iy, ix] = NaN
-        refl[iy, ix] = NaN
-      end
-      @info "T = " tran[iy, ix]
-    end
-    if !isapprox(tran[iy, ix] + refl[iy, ix], 1.0, atol=1e-5)
-      @warn "T+R != 1.0"
-    end
-  end
-  @info "Lining time            = " full_time
-  @info "Total time in solver   = " avg_iteration_time
-  @info "Average iteration time = " avg_iteration_time / lines^2
+#   @info "Running lining..."
+#   avg_iteration_time = 0.0
+#   iter = Iterators.product(enumerate(y_axis), enumerate(x_axis))
+#   full_time = @elapsed for ((iy, y), (ix, x)) in ProgressBar(iter)
+#     sim = deepcopy(archetype)
+#     collapse_occured = false
+#     if sweep == "vel"
+#       imprint_vel_set_bar!(sim; vv=x, bb=y)
+#     elseif sweep == "bar"
+#       imprint_vel_set_bar!(sim; vv=y, bb=x)
+#     end
+#     sol = nothing
+#     try
+#       avg_iteration_time += @elapsed sol = runsim(sim; info=false)
+#     catch err
+#       if isa(err, NpseCollapse) || isa(err, Gpe3DCollapse)
+#         collapse_occured = true
+#       else
+#         throw(err)
+#       end
+#     end
+#     # catch maxiters hit and set the transmission to zero
+#     if sim.manual == false
+#       if sol.retcode != ReturnCode.Success
+#         @info "Run complete, computing transmission..."
+#         @info "Detected solver failure"
+#         tran[iy, ix] = 0.0
+#         refl[iy, ix] = 1.0
+#         @info "T = " tran[iy, ix]
+#       else
+#         if !collapse_occured
+#           final = sol.u[end]
+#           @info "Run complete, computing transmission..."
+#           xspace!(final, sim)
+#           tran[iy, ix] = ns(final, sim, mask_tran)
+#           refl[iy, ix] = ns(final, sim, mask_refl)
+#         else
+#           @info "Run complete, detected collapse..."
+#           tran[iy, ix] = NaN
+#         end
+#         @info "T = " tran[iy, ix]
+#       end
+#     else
+#       if !collapse_occured
+#         final = sol.u[end]
+#         @info "Run complete, computing transmission..."
+#         xspace!(final, sim)
+#         tran[iy, ix] = ns(final, sim, mask_tran)
+#         refl[iy, ix] = ns(final, sim, mask_refl)
+#       else
+#         @info "Run complete, detected collapse..."
+#         tran[iy, ix] = NaN
+#         refl[iy, ix] = NaN
+#       end
+#       @info "T = " tran[iy, ix]
+#     end
+#     if !isapprox(tran[iy, ix] + refl[iy, ix], 1.0, atol=1e-5)
+#       @warn "T+R != 1.0"
+#     end
+#   end
+#   @info "Lining time            = " full_time
+#   @info "Total time in solver   = " avg_iteration_time
+#   @info "Average iteration time = " avg_iteration_time / lines^2
 
-  JLD2.@save("tran_$(name).jld2", tran)
-  JLD2.@save("refl_$(name).jld2", refl)
-  return tran
-end
+#   JLD2.@save("tran_$(name).jld2", tran)
+#   JLD2.@save("refl_$(name).jld2", refl)
+#   return tran
+# end
 
 """
   Simple plotting of all the lines in the dictionary

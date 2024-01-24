@@ -33,6 +33,9 @@ function load_simulation(input_dir, eq::EquationType;
   nonlin_df = CSV.read(input_dir * "nonlinearity.csv", DataFrame)
   precis_df = CSV.read(input_dir * "precision.csv", DataFrame)
   verb && @info @sprintf("Loading %s... \n\tDomain      : %s,\n\tNonlinearity: %s,\n\tPrecis      : %s.", eq.name, domain_df.name[idx_domain], nonlin_df.name[idx_nonlin], precis_df.name[idx_precis])
+  display(domain_df)
+  display(nonlin_df)
+  display(precis_df)
   if eq == GPE_3D
     L = (domain_df.L_axial[idx_domain], domain_df.L_radial[idx_domain], domain_df.L_radial[idx_domain])
     N = (domain_df.N_axial_3D[idx_domain], domain_df.N_radial[idx_domain], domain_df.N_radial[idx_domain])
@@ -89,10 +92,10 @@ function load_simulation(input_dir, eq::EquationType;
   initial_width = nonlin_df.initial_width[idx_nonlin]
   if eq == GPE_3D
     tmp = [exp(-((x)^2 / initial_width + (y^2 + z^2) / 2)) for x in x, y in y, z in z]
-    sim.psi_0 = CuArray(tmp)
+    sim.psi_0 .= CuArray(tmp)
     sim.psi_0 .= sim.psi_0 / sqrt(sum(abs2.(sim.psi_0) * sim.dV)) # is this normalization needed because of CuArray/Array? 
     sim.maxiters = domain_df.max_iters[idx_domain] / 10 # set smart maxiters in 3D
-    tmp = [1 / 2 * (y^2 + z^2) for x in x, y in y, z in z]
+    tmp .= [1 / 2 * (y^2 + z^2) for x in x, y in y, z in z]
     sim.V0 = CuArray(tmp)
   else
     @. sim.psi_0 = exp(-(x / initial_width)^2)

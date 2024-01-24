@@ -10,7 +10,7 @@ collapse validation
 function fill_tiles(;
   return_maximum=false,
   number_of_tiles=20,
-  eqs=[NPSE_plus],
+  eqs=[GPE_1D, NPSE],
   plot_finals=false,
   gamma=0.65
 )
@@ -51,8 +51,8 @@ function get_tile(
     @warn "Plotting finals!"
   end
   saveto = "../media/tiles_$(name).pdf"
-  max_vel = 5.0
-  max_bar = 5.0
+  max_vel = 1.0
+  max_bar = 1.0
   #
   vel_list = LinRange(0.1, max_vel, tiles)
   bar_list = LinRange(0, max_bar, tiles)
