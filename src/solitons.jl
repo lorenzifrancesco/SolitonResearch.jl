@@ -3,9 +3,9 @@ Iterate the soliton finding routine over a set of equations.
 Use precomputed values when possible
 """
 function fill_solitons(;
-  eqs=[GPE_3D],
+  eqs=[GPE_1D, NPSE, NPSE_plus],
   use_precomputed=true)
-  sl = load_simulation_list()
+  sl = load_simulation_list(eqs=eqs)
   sl = filter(p -> (p.equation in eqs), sl)
   get_soliton.(sl, use_precomputed=use_precomputed)
   return
@@ -67,7 +67,7 @@ function plot_solitons(;
 
   soliton_dict = load_soliton_dictionary(info=info)
   human_readable_soliton()
-  # pyplot(size=(359, 220))
+  pyplot(size=(359, 220))
   p = plot()
   s = plot()
   @assert is_gamma_uniform(soliton_dict)

@@ -7,7 +7,7 @@ function bar_interval(i)
 end
 
 function vel_interval(i)
-  extremes = [1.0, 7.0]
+  extremes = [0.6, 7.0]
   return extremes[i]
 end
 

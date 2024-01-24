@@ -1,5 +1,5 @@
-function compare_chempot(; use_precomputed=false, take_advantage=true)
-  # pyplot(size=(350, 220))
+function compare_chempot(; use_precomputed=true, take_advantage=true)
+  pyplot(size=(350, 220))
   sl = load_simulation_list(eqs=[GPE_1D,NPSE_plus, NPSE, GPE_3D])
   N_samples = 20
   gamma_range = LinRange(0.1, 1.0, N_samples) # TODO
@@ -73,7 +73,7 @@ function compare_chempot(; use_precomputed=false, take_advantage=true)
       p,
       gamma_range,
       mu_vec,
-      label=sim.equation.name,
+      label=sim.name,
       color=sim.color,
       linestyle=sim.linestyle,
     )
