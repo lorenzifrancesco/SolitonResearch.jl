@@ -49,6 +49,7 @@ function show_slice(
   file="slice.png",
   show=false,
 )
+  pyplot(size=(250, 200))
   @unpack L, X, N = sim
   psi = Array(xspace(psi, sim))
   x = X[1] |> real
@@ -58,7 +59,7 @@ function show_slice(
   y = X[2] |> real
   z = X[3] |> real
   saveto = joinpath("media", file)
-  ht = heatmap(y, z, abs2.(psi[idx, :, :]))
+  ht = heatmap(y, z, abs2.(psi[idx, :, :]), xlabel=L"z", ylabel=L"y", colorbar_title=L"|\psi|^2")
   show ? display(ht) : nothing
   return ht
 end

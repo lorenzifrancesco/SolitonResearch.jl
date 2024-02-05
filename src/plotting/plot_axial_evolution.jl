@@ -12,7 +12,9 @@ function plot_axial_heatmap(
   x = X[1]
   u = reduce(hcat, u)
   doifft ? u = mapslices(x -> xspace(x, sim), u, dims=(1)) : nothing
-  ht = Plots.heatmap(real.(x), t, clamp.(abs2.(u)', -1.0, 2.0), title=title)
+  ht = Plots.heatmap(real.(x), t, clamp.(abs2.(u)', -1.0, 2.0), 
+  xlabel=L"x", ylabel=L"t", colorbar_title=title, grid=false, minorgrid=false)
+  # hidedecorations!(ht, grid=false, minorgrid=false)
   show ? display(ht) : nothing
   savefig(ht, path * "tmp.pdf")
   return ht
@@ -37,7 +39,7 @@ function plot_axial_heatmap(
   doifft ? ux = [xspace(x, sim) for x in u] : nothing
   u_axial = [sum(abs2.(x), dims=ax_list)[:, 1, 1] for x in ux]
   u_axial = Array(reduce(hcat, u_axial))
-  ht = Plots.heatmap(real.(x), time_axis, u_axial', title=title)
+  ht = Plots.heatmap(real.(x), time_axis, u_axial',  xlabel=L"x", ylabel=L"t",colorbar_title=title)
   display(ht)
   return ht
 end

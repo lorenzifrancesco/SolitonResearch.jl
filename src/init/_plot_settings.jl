@@ -30,7 +30,7 @@ function lineof(name::String)
   if name == "G3"
     return :solid
   elseif name == "G1"
-    return :solid
+    return :dashdot
   elseif name == "N"
     return :dot
   elseif name == "Np"

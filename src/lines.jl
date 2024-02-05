@@ -7,7 +7,7 @@ function bar_interval(i)
 end
 
 function vel_interval(i)
-  extremes = [0.6, 7.0]
+  extremes = [0.6, 0.8]
   return extremes[i]
 end
 
@@ -19,8 +19,8 @@ function fill_lines(
   use_precomputed_lines=false,
   use_precomputed_gs=false,
   plot_finals=false,
-  eqs=[GPE_3D, GPE_1D, NPSE, NPSE_plus],
-  n_lines=1,
+  eqs=[GPE_3D],
+  n_lines=3,
   n_points=20)
   if Threads.nthreads() == 1
     @warn "running in single thread mode!"
@@ -118,8 +118,9 @@ function get_lines(
   print("|tid|   x |   y |     dt|   T %|1-T-R %| collapse|   iter time|\n")
   print("____________________________________________________________________")
   full_time = @elapsed begin
+    @warn "no threading"
     # TODO put threads in the inner loop
-    Threads.@threads for ix in eachindex(x_axis)
+    for ix in eachindex(x_axis)
       x = x_axis[ix]
       for (iy, y) in enumerate(y_axis)
         if sweep == "vel"
@@ -134,6 +135,7 @@ function get_lines(
         try
           this_iteration_time = @elapsed (sol, maxim) = runsim(loop_sim; info=false)
           avg_iteration_time += this_iteration_time
+          GC.gc()
         catch err
           if isa(err, NpseCollapse) || isa(err, Gpe3DCollapse)
             collapse_occured = true
@@ -349,7 +351,7 @@ end
 """
   More sophisticated plotting
 """
-function plot_lines(number_of_lines=1, sweep="bar")
+function plot_lines(number_of_lines=3, sweep="bar")
   # pyplot(size=(350, 220))
   for i = 1:number_of_lines
     compare_all_lines(slice_choice=i, sweep=sweep)
@@ -357,7 +359,7 @@ function plot_lines(number_of_lines=1, sweep="bar")
 end
 
 function compare_all_lines(; slice_choice=1, sweep="bar")
-  # pyplot(size=(350, 220))
+  pyplot(size=(300, 220))
   line_file = "results/line_dict.jld2"
   @assert isfile(line_file)
   ld = JLD2.load(line_file)
@@ -394,15 +396,32 @@ function compare_all_lines(; slice_choice=1, sweep="bar")
         end
       end
     end
-    plot!(
-      p,
-      collect(x),
-      choice,
-      linestyle=lineof(ihs(k)),
-      color=colorof(ihs(k)),
-      label=nameof(ihs(k)),
-    )
-    # end
+    if ihs(k)[1]=="N"
+      # plot!(
+      #   p,
+      #   collect(x),
+      #   choice,
+      #   linestyle=lineof(ihs(k)),
+      #   color=colorof(ihs(k)),
+      #   seriestype=:scatter
+      # )      
+      scatter!(
+        p,
+        collect(x),
+        choice,
+        label=nameof(ihs(k)),
+        mc=:green, ms=3, ma=0.7
+      )
+    else
+      plot!(
+        p,
+        collect(x),
+        choice,
+        linestyle=lineof(ihs(k)),
+        color=colorof(ihs(k)),
+        label=nameof(ihs(k)),
+      )
+    end
     cnt += 1
   end
   plot!(p, grid=false, legend=:topright)
