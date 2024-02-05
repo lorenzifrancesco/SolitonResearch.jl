@@ -4,3 +4,6 @@ dump
 .vscode
 *.pdf
 *.jld2
+*.log
+*.txt
+*.csv
