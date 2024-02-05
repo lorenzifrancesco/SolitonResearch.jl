@@ -1,10 +1,10 @@
 function compare_chempot(; use_precomputed=true, take_advantage=true)
   pyplot(size=(350, 220))
   sl = load_simulation_list(eqs=[GPE_1D,NPSE_plus, NPSE, GPE_3D])
-  N_samples = 20
+  N_samples = 50
   gamma_range = LinRange(0.1, 1.0, N_samples) # TODO
   p = plot(xlabel=L"\gamma", ylabel=L"\mu")
-
+  q = plot(xlabel=L"\gamma", ylabel=L"E")
   if isfile("results/mu_db.jld2")
     @info "=> Found dictionary, loading..."
     mud = JLD2.load("results/mu_db.jld2", "mud")
@@ -21,6 +21,7 @@ function compare_chempot(; use_precomputed=true, take_advantage=true)
     @printf("=========================\n")
     sim.iswitch = -im
     mu_vec = zeros(length(gamma_range))
+    e_vec = zeros(length(gamma_range))
     k = sim.equation.name
     if haskey(mud, hs(k, 0.666)) && use_precomputed
       mu_vec = mud[hs(k, 0.666)]
@@ -35,18 +36,11 @@ function compare_chempot(; use_precomputed=true, take_advantage=true)
           psi_0 .= sol.u[end]
           @pack_Sim! sim
         end
-
         try
-          # @warn "vecc"
           compound_sol = runsim(sim; info=true)
           sol = compound_sol[1]
-          # @warn size(sol.u[end])
           sane = true
-          # qq = plot()
-          # plot_final_density!(qq, sol.u, sim; show=true, title=string(gamma))
-          # display(qq)
-          # savefig(qq, "media/tmp_gamma_" * string(gamma) * ".pdf")
-          # sleep(1)
+          print("-->final time = $(sol.cnt * sim.dt) \n --> Computing chempot...")
           mu_vec[ig] = chempotk(sol.u[end], sim)
         catch e
           if isa(e, NpseCollapse) || isa(e, Gpe3DCollapse)
@@ -62,13 +56,19 @@ function compare_chempot(; use_precomputed=true, take_advantage=true)
             rethrow(e)
           end
         end
-
       end
-
       @warn "pushing"
       push!(mud, hs(k, 0.666) => mu_vec)
       JLD2.save("results/mu_db.jld2", "mud", mud)
     end
+    dgamma = gamma_range[2]-gamma_range[1]
+    for (ig, gamma) in enumerate(gamma_range)
+      if ig == 1
+        e_vec[ig] = mu_vec[ig]*dgamma
+      else
+        e_vec[ig] = e_vec[ig-1]+mu_vec[ig]*dgamma
+      end
+      end
     plot!(
       p,
       gamma_range,
@@ -77,6 +77,16 @@ function compare_chempot(; use_precomputed=true, take_advantage=true)
       color=sim.color,
       linestyle=sim.linestyle,
     )
+    @info e_vec
+    plot!(
+      q,
+      gamma_range,
+      e_vec,
+      label=sim.name,
+      color=sim.color,
+      linestyle=sim.linestyle,
+    )
   end
   savefig(p, "media/chempot_compare.pdf")
+  savefig(q, "media/energy_compare.pdf")
 end
