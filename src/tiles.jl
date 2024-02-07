@@ -1,202 +1,223 @@
 # JULIA_CUDA_SOFT_MEMORY_LIMIT = "95%"
 
-function tiles(;
-  extremes=true,
-  use_precomputed_gs=true,
-  use_precomputed_tiles=false,
-  return_maximum=false,
-  number_of_tiles=2, 
-  equation_selection = ["G1", "Np"])
+"""
+Iterate the tiles finding routine over a set of equations.
+Use precomputed values when possible.
 
-  # FFTW.set_num_threads(20)
-  startup_equation = "G1"
-  
+we can plot_finals values for debug, and return_maximum for 
+collapse validation 
+"""
+function fill_tiles(;
+  return_maximum=false,
+  number_of_tiles=20,
+  eqs=[NPSE_plus],
+  plot_finals=false,
+  gamma=0.65
+)
   if Threads.nthreads() == 1
     @warn "running in single thread mode!"
   end
-
-  save_path = "results/"
-  gamma_list = [0.65]
-  @info "This is a message"
-  for gamma in gamma_list
-    print("\n---> Using gamma: ", gamma)
-    @info "_____________________________"
-    @info "\tpreparing"
-
-    # FIXME we are using literals ---> @everywhere load_into_workers
-    @everywhere begin
-    sd = load_parameters_alt(gamma_param=0.65; nosaves=true)
-    sd = filter(p -> (first(p) in ["G1"]), sd)
-    end
-    # @info "\tRequired simulations: " keys(sd)
-    # @info "\tsetting ground state"
-    @time @everywhere prepare_for_collision!(sd, 0.65; use_precomputed_gs=true)
-    # check the extremes for stability of the method
-    if extremes
-      @info "Computing the extremes..."
-      four_extremes = get_tiles(sd[startup_equation], startup_equation;
-        tiles=2,
-        plot_finals=false)
-      print("--> Extremes computed. Going on? [N/y]")
-      ans = readline()
-      if ans != "y"
-        return
-      end
-    end
-    if isfile(save_path * "tile_dict.jld2")
-      @info "Loading Tiles library..."
-      tile_dict = JLD2.load(save_path * "tile_dict.jld2")
-    else
-      @info "No Tiles library found! Saving an empty one..."
-      tile_dict = Dict()
-      JLD2.save(save_path * "tile_dict.jld2", tile_dict)
-    end
-
-    for (name, sim) in sd
-      print("\n")
-      @info "==============================================="
-      @info "\t\tTiling "*string(name)
-      @info "==============================================="
-      print("\n")
-      if haskey(tile_dict, hs(name, gamma)) && use_precomputed_tiles
-        @info "Already found tile for " name, gamma
-      else
-        tile = get_tiles(sim, name; tiles=number_of_tiles)
-        @info "==== Saving tiles"
-        push!(tile_dict, hs(name, gamma) => tile)
-        JLD2.save(save_path * "tile_dict.jld2", tile_dict)
-      end
-    end
-  end
-  view_all_tiles()
+  sl = load_simulation_list(eqs=eqs)
+  sl = filter(p -> (p.equation in eqs), sl)
+  get_tile.(sl,
+    tiles=number_of_tiles,
+    use_precomputed=false,
+    return_maximum=return_maximum,
+    plot_finals=plot_finals)
+  plot_tiles()
 end
 
-function get_tiles(
-  sim::Sim{1,Array{Complex{Float64}}},
-  name::String="noname";
+"""
+Get the tiles, check if they are precomputed 
+(TODO get partially precomputed tile grid)
+"""
+function get_tile(
+  sim::Sim{1,Array{Complex{Float64}}};
+  use_precomputed=false,
+  name::String="noname",
+  return_maximum=false,
   tiles=100,
-  plot_finals=false)
-
+  plot_finals=false,
+  messages=true,
+  infos=false
+)
+  name = sim.equation.name
+  gamma = g2gamma(sim.g, sim.equation)
+  messages && @info "==============================================="
+  messages && @info "\t\tTiling " * string(sim.equation.name)
+  messages && @info @sprintf("\t\tUsing gamma: %.3f", gamma)
+  messages && @info "==============================================="
+  if plot_finals
+    @warn "Plotting finals!"
+  end
   saveto = "../media/tiles_$(name).pdf"
-  max_vel = 1
-  max_bar = 1
+  max_vel = 1.0
+  max_bar = 1.0
   #
   vel_list = LinRange(0.1, max_vel, tiles)
   bar_list = LinRange(0, max_bar, tiles)
   tran = Array{Float64,2}(undef, (tiles, tiles))
   refl = Array{Float64,2}(undef, (tiles, tiles))
-  warning = zeros((tiles, tiles))
+  maxi = Array{Float64,2}(undef, (tiles, tiles))
+  sane = Array{Float64,2}(undef, (tiles, tiles))
+  #initialize negative values
+  tran = -0.1 * ones((tiles, tiles))
+  refl = -0.1 * ones((tiles, tiles))
+  maxi = -0.1 * ones((tiles, tiles))
+  sane = -0.1 * ones((tiles, tiles))
 
-  @info "Filling sim grid..."
-  sgrid = Array{Sim,2}(undef, (tiles, tiles))
-  archetype = sim
-  sgrid[1, 1] = archetype
-  @time begin
-  for (vx, vv) in enumerate(vel_list)
-      for (bx, bb) in enumerate(bar_list)
-        sgrid[bx, vx] = imprint_vel_set_bar(archetype; vv=vv, bb=bb)
-      end
+  sim.iswitch = 1
+  tile_dict = load_tile_dictionary()
+  messages && @info "\tSetting ground state..."
+  prepare_for_collision!(sim, gamma; use_precomputed_gs=false)
+  if haskey(tile_dict, hs(name, gamma)) && use_precomputed
+    messages && @info "Already found tile for " equation, gamma
+  else
+    @info "===============================================\n\t Running tiling subroutine"
+    archetype = sim
+    mask_refl = map(xx -> xx > 0, archetype.X[1] |> real)
+    mask_tran = map(xx -> xx < 0, archetype.X[1] |> real)
+
+    this_iteration_time = 0.0
+    avg_iteration_time = 0.0
+    counter = 0
+
+    print("____________________________________________________________________\n")
+    print("|tid| num|   bx|   vx|     dt|   T %|1-T-R %| collapse|   iter time|\n")
+    print("____________________________________________________________________")
+
+
+    """
+    thread-local variables: 
+    - collapse_occured
+    - maxim 
+    - sol
+    thread-global
+    - counter  <---- gets written! but the read-write is ATOMIC (too fast to interfere)
+    - archetype
+    - masks
+    - avg_iteration_time <---- idem
+    - tran / refl <--- could have problem when loaded all toghether in chunks (fantasmi del secondo tipo)
+    """
+    full_time = @elapsed begin
+      Threads.@threads for vx in eachindex(vel_list)
+        # @showprogress "Computing all the velocities..." for vx in eachindex(vel_list)
+        vv = vel_list[vx]
+        # messages && print("\t"*@sprintf("Free memory = %.3f GiB", Sys.free_memory() / 2^30))
+        collapse_occured = false
+        maxim = -1.0
+        # @spawnat ipr+1 begin
+        for (bx, bb) in enumerate(bar_list)
+          loop_sim = imprint_vel_set_bar(archetype; vv=vv, bb=bb)
+          if bx > 2 && isnan(tran[bx-1, vx]) && isnan(tran[bx-2, vx])
+            # messages && @printf("\n Collapse shortcut!")
+            # collapse_occured = true
+            # this_iteration_time = 0.0
+          end
+          sol = nothing
+          tile_mess = @sprintf("| %2i|%4i|  %3i|  %3i|  %.3f|",
+            Threads.threadid(),
+            bx + tiles * (vx - 1),
+            vx,
+            bx,
+            loop_sim.dt
+          )
+          # messages && print("\n..."*tile_mess) 
+          if !collapse_occured
+            try
+              this_iteration_time = @elapsed (sol, maxim) = runsim(loop_sim; info=infos, return_maximum=return_maximum)
+              avg_iteration_time += this_iteration_time
+              # FIXME avoid NPSE+ memory filling problem
+              GC.gc()
+
+              if plot_finals
+                pp = plot()
+                plot_final_density!(pp,
+                  sol.u,
+                  loop_sim;
+                  show=false,
+                  title=@sprintf("[vx=%3i, bx=%3i]/%3i", vx, bx, tiles)
+                )
+                savefig(pp, "media/checks/final_$(name)_$(vx)_$(bx)_$(tiles).pdf")
+                qq = plot_axial_heatmap(
+                  sol.u,
+                  loop_sim.t,
+                  loop_sim;
+                  show=false,
+                  title=@sprintf("[vx=%i, bx=%i]/%i", vx, bx, tiles)
+                )
+                savefig(qq, "media/checks/heatmap_$(name)_$(vx)_$(bx)_$(tiles).pdf")
+              end
+            catch err
+              if isa(err, NpseCollapse) || isa(err, Gpe3DCollapse)
+                collapse_occured = true
+              else
+                throw(err)
+              end
+            end
+          end
+          @assert loop_sim.manual == true
+          if !collapse_occured
+            final = sol.u[end]
+            # @info "Run complete, computing transmission..."
+            xspace!(final, loop_sim)
+            tran[bx, vx] = ns(final, loop_sim, mask_tran)
+            refl[bx, vx] = ns(final, loop_sim, mask_refl)
+            maxi[bx, vx] = maxim
+            sane[bx, vx] = 1 - tran[bx, vx] - refl[bx, vx]
+          else
+            tran[bx, vx] = NaN
+            maxi[bx, vx] = NaN
+            sane[bx, vx] = NaN
+          end
+          messages && print("\n" * tile_mess * @sprintf("   %3i|    %3i|      %s|%12.2f|",
+                              collapse_occured ? 999 : Int(round(tran[bx, vx] * 100)),
+                              collapse_occured ? 999 : Int(round((1 - tran[bx, vx] - refl[bx, vx]) * 100)),
+                              collapse_occured ? "yes" : " no",
+                              this_iteration_time
+                            ))
+          counter += 1
+
+          incremental = "more_precise_"*sim.equation.name*string(tiles)
+          CSV.write("results/" * incremental * "_tran.csv", Tables.table(tran))
+          CSV.write("results/" * incremental * "_sane.csv", Tables.table(sane))
+          # csv2color("runtime_tran")
+          if return_maximum
+            CSV.write("results/" * incremental * "_maxi.csv", Tables.table(maxi))
+            # csv2color("runtime_maxi")
+          end
+        end # barrier loop
+        # end # spawnat
+        # ipr += 1
+        # ipr = ipr % workers()
+
+      end # velocities loop
     end
+    messages && @info "Saving tiles"
+    push!(tile_dict, hs(name, gamma) => tran)
+    JLD2.save("results/tile_dict.jld2", tile_dict)
+    print("\n")
+    @info "==================================================================="
+    @info "Pavement time    = " * @sprintf("%.3f", full_time)
+    @info "% time in solver = " * @sprintf("%.3f, %.0f %% of pavement time", avg_iteration_time, avg_iteration_time / full_time * 100)
+    @info "Single tile time = " * @sprintf("%.3f", avg_iteration_time / tiles^2)
+    @info "==================================================================="
+    print("\n")
   end
-  # all sims have the same x
-  mask_refl = map(xx -> xx > 0, sgrid[1, 1].X[1] |> real)
-  mask_tran = map(xx -> xx < 0, sgrid[1, 1].X[1] |> real)
+  return tran
+end
 
-  @info "Running tiling..."
-  avg_iteration_time = 0.0
-  iter = Iterators.product(enumerate(vel_list), enumerate(bar_list))
-  
-  full_time = @elapsed begin
-  @distributed (+) for vx in 1:length(vel_list)
-    vv = vel_list[vx]
-    # print("\n===[", vx, "]===\n")
-    @printf("Computing velocity [vx=%i] / %i", vx, tiles)
-    for (bx, bb) in enumerate(bar_list)
-    sim = sgrid[bx, vx]
-    collapse_occured = false
-    # print("\nComputing tile", (vv, bb))
-    @printf("barrier [bx=%i]", bx)
-    sol = nothing
-    try
-      print("\n")
-      avg_iteration_time += @elapsed sol = runsim(sim; info=false)
-      print("\n")
-
-      # FIXME avoid NPSE+ memory filling problem
-      # @info "GC..."
-      # GC.gc()
-      if plot_finals
-        pp = plot_final_density(sol.u, sim; show=false)
-        savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
-        qq = plot_axial_heatmap(sol.u, sim.t, sim; show=false)
-        savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
-      end
-    catch err
-      if isa(err, NpseCollapse) || isa(err, Gpe3DCollapse)
-        collapse_occured = true
-      else
-        throw(err)
-      end
-    end
-    # catch maxiters hit and set the transmission to zero
-    if sim.manual == false
-      if sol.retcode != ReturnCode.Success
-        # @info "Run complete, computing transmission..."
-        @info "Detected solver failure"
-        tran[bx, vx] = 0.0
-        refl[bx, vx] = 1.0
-        @printf "\n\t T = %.2f" tran[bx, vx]
-      else
-        # CHANGE : saving the maximum value occured in the iterations
-        final = sol.u[end]
-        # @info "Run complete, computing transmission..."
-        xspace!(final, sim)
-        tran[bx, vx] = ns(final, sim, mask_tran)
-        refl[bx, vx] = ns(final, sim, mask_refl)
-        print("\t T = ", tran[bx, vx])
-      end
-    else
-      if !collapse_occured
-        final = sol.u[end]
-        # @info "Run complete, computing transmission..."
-        xspace!(final, sim)
-        tran[bx, vx] = ns(final, sim, mask_tran)
-        refl[bx, vx] = ns(final, sim, mask_refl)
-      else
-        print("\n\tRun complete, detected collapse...")
-        tran[bx, vx] = NaN
-      end
-      print("\n\t T = ", tran[bx, vx])
-    end
-    if !isapprox(tran[bx, vx] + refl[bx, vx], 1.0, atol=1e-5)
-      @printf "\n\tWARN: [T+R = %.4f]" tran[bx, vx]+refl[bx, vx]
-      warning[bx, vx] = tran[bx, vx]+refl[bx, vx]
-    end
-  end
-end
-end
-print("\n")
-@info "_________________________________________________"
-@info "Pavement time    = "*string(full_time)
-@info "Single tile time = "*string(avg_iteration_time / tiles^2)
-@info "_________________________________________________"
-print("\n")
-JLD2.@save("tran_$(name).jld2", tran)
-JLD2.@save("refl_$(name).jld2", refl)
-JLD2.@save("warn_$(name).jld2", warning)
-norm_bar = bar_list / max_bar
-norm_vel = vel_list / max_vel
-return tran
-end
 
 """
 in the 3D case we do not have sufficient GPU mem, so we go serially
 """
-function get_tiles(
+function get_tile(
   archetype::Sim{3,CuArray{Complex{Float64}}},
   name::String="noname";
   tiles=100,
-  plot_finals=false)
+  plot_finals=false,
+)
+  @assert false
   saveto = "../media/tiles_$(name).pdf"
   max_vel = 1
   max_bar = 1
@@ -223,12 +244,12 @@ function get_tiles(
     try
       avg_iteration_time += @elapsed sol = runsim(sim; info=false)
       if plot_finals
-        pp = plot_final_density(sol.u, sim; show=false)
+        pp = plot()
+        pp = plot_final_density!(pp, sol.u, sim; show=false)
         savefig(pp, "media/checks/final_$(name)_$(vv)_$(bb).pdf")
         qq = plot_axial_heatmap(sol.u, sim.t, sim; show=false)
         savefig(qq, "media/checks/heatmap_$(name)_$(vv)_$(bb).pdf")
       end
-
 
     catch err
       if isa(err, NpseCollapse) || isa(err, Gpe3DCollapse)
@@ -290,158 +311,21 @@ function get_tiles(
   return tran
 end
 
-function view_all_tiles()
-  # pyplot(size=(300, 220))
-  # pyplot(size=(300, 260))
-  tile_file = "results/tile_dict.jld2"
-  @assert isfile(tile_file)
-  td = JLD2.load(tile_file)
-  delete!(td, hs("CQ", 0.65))
-  ht_list = []
-  ct_list = []
-  vaxx = []
-  baxx = []
-  vaxis = nothing
-  baxis = nothing
-  kk = []
-  for (k, v) in td
-    push!(kk, k)
-    @info "found" ihs(k)
-    if ihs(k)[1] == "G3" || ihs(k)[1] == "Np"
-      preprocess_tiles_3d!(v)
-    end
-    baxis = LinRange(0.0, 1.0, size(v)[1])
-    vaxis = LinRange(0.1, 1.0, size(v)[1])
-    push!(vaxx, vaxis)
-    push!(baxx, baxis)
-    ht2 = heatmap(
-      vaxis, 
-      baxis, 
-      v, 
-      clabels=true, 
-      xlabel=L"v", 
-      ylabel=L"b", 
-      colorbar_title=L"T",
-      # legend=false,
-      aspect_ratio=:equal,
-      top_margin=0 * Plots.mm,
-      bottom_margin=0 * Plots.mm,
-      left_margin=0 * Plots.mm,
-      right_margin=0 * Plots.mm,
-      )
-    savefig(ht2, "media/tiles_" * string(ihs(k)) * "_ht.pdf")
-    push!(ht_list, deepcopy(v))
-    v, mask = process_tiles(v)
-    ht = contour(vaxis, baxis, v, clabels=true, xlabel=L"v", ylabel=L"b")
-    contour!(ht, vaxis, baxis, mask,  levels = [0.0], color=:turbo, linestyle=:dot ,linewidth=1.8)
-    push!(ct_list, deepcopy(mask))
-    savefig(ht, "media/tiles_" * string(ihs(k)) * "_ct.pdf")
+
+"""
+Check if the dictionary exists, return it if it exists, 
+  or save a new empty one and return it if doesn't
+"""
+function load_tile_dictionary(;
+  save_path="results/",
+  info::Bool=false
+)
+  if isfile(save_path * "tile_dict.jld2")
+    tile_dict = JLD2.load(save_path * "tile_dict.jld2")
+    info && @info "Found tile dictionary: " tile_dict
+  else
+    tile_dict = Dict{EquationType,Tuple{AbstractArray}}()
+    JLD2.save(join([save_path, "tile_dict.jld2"]), tile_dict)
   end
-
-  try
-    margins = -4
-    heat_first = heatmap(
-      vaxx[1], 
-      baxx[1], 
-      ht_list[1], 
-      clabels=true, 
-      xlabel=L"v", 
-      ylabel=L"b", 
-      aspect_ratio=:equal,
-      # legend=:none,
-      margin= margins * Plots.mm
-      )
-
-    last_idx = length(ht_list)
-    heat_last = heatmap(
-      vaxx[last_idx], 
-      baxx[last_idx], 
-      ht_list[last_idx], 
-      clabels=true, 
-      xlabel=L"v", 
-      aspect_ratio=:equal,
-      margin= margins * Plots.mm
-      )
-
-    layout = grid(1, length(ht_list), widths=[0.25, 0.25, 0.25, 0.25])
-
-    ht_comp = plot(heat_first, [
-      heatmap(
-        vaxx[i], 
-        baxx[i], 
-        ht_list[i], 
-        clabels=true, 
-        xlabel=L"v", 
-        aspect_ratio=:equal,
-        # legend=:none,
-        margin = margins *Plots.mm
-        )
-        for i in eachindex(ht_list)[2:end-1]
-          ]...,
-        heat_last,
-        layout=layout,
-        link=:y,
-        leg=false,
-        yformatter = _->"",
-        # size=(900, 250),
-        framestyle=:none
-    )
-  
-    # display(ht_comp)
-    savefig(ht_comp, "media/tiles_ht_comp.pdf")
-  catch err
-    throw("Not plotting comparison")
-  end
-end
-
-function preprocess_tiles_3d!(tt)
-  for bar in 1:size(tt)[1]
-    for vel in 2:size(tt)[2]
-      if tt[vel, bar] - tt[vel-1, bar] > 0.02
-        tt[vel, bar] = NaN
-        for velx in vel:size(tt)[2]
-          tt[velx, bar] = NaN
-        end
-      end
-    end
-  end
-  return tt
-end
-
-function process_tiles(tt)
-  mask = ones(size(tt))
-  # FIXME the names
-  for bar in 1:size(tt)[1]
-    for vel in 2:size(tt)[2]
-      if abs(tt[vel, bar] - tt[vel-1, bar]) > 0.3
-        tt[vel, bar] = NaN
-        for velx in 1:vel
-          mask[velx, bar] = 0.0
-        end
-      end
-    end
-  end
-
-  flag_prev = true
-  flag_curr = true
-  posv = 1
-  posb = 1
-  for vel in 1:size(tt)[2]
-    flag_curr = true
-    for bar in 1:size(tt)[1]
-      if mask[vel, bar] == 0.0
-        flag_curr = false
-        posv = vel
-        posb = bar
-      end
-    end
-    if flag_prev == false && flag_curr == true
-      for velx in 1:posv
-        mask[velx, posb] = NaN
-      end
-      return tt, mask
-    end
-    flag_prev = flag_curr
-  end
-  return tt, mask
+  return tile_dict
 end

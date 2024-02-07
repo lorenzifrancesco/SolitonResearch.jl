@@ -1,9 +1,10 @@
 media
 results
 dump
+human_readable
 .vscode
 *.pdf
 *.jld2
+log*
 *.log
-*.txt
-*.csv
+diagnostic/*.csv

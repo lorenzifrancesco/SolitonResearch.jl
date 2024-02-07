@@ -1,5 +1,5 @@
 
-function colorof(key::Tuple{String, Float64})
+function colorof(key::Tuple{String,Float64})
   name = key[1]
   return colorof(name)
 end
@@ -10,17 +10,17 @@ function colorof(name::String)
   elseif name == "G1"
     return :grey
   elseif name == "N"
-    return :green 
+    return :green
   elseif name == "Np"
     return :green
   elseif name == "CQ"
     return :blue
-  else 
+  else
     return :black
   end
 end
 
-function lineof(key::Tuple{String, Float64})
+function lineof(key::Tuple{String,Float64})
   name = key[1]
   return lineof(name)
 end
@@ -30,19 +30,19 @@ function lineof(name::String)
   if name == "G3"
     return :solid
   elseif name == "G1"
-    return :solid
+    return :dashdot
   elseif name == "N"
     return :dot
   elseif name == "Np"
     return :dash
   elseif name == "CQ"
     return :dashdot
-  else 
+  else
     return :solid
   end
 end
 
-function nameof(key::Tuple{String, Float64})
+function nameof(key::Tuple{String,Float64})
   name = key[1]
   return nameof(name)
 end
@@ -58,7 +58,7 @@ function nameof(name::String)
     return "NPSE+"
   elseif name == "CQ"
     return "CQ-GPE"
-  else 
+  else
     return "Unknown"
   end
 end
