@@ -93,12 +93,6 @@ function plot_solitons(;
     )
     
     sigma = estimate_sigma2k(solution, sim)
-    if ihs(k)[1] == "G3"
-      # show_slice(0.0, sim.psi_0, sim)
-      # show_profile(0.0, sim.psi_0, sim)
-      @warn @sprintf("Pushing the sigma of : %12.8f", 1-sigma[1]) 
-      # sigma .= sigma .+ (1-sigma[1])
-    end
     # @warn sigma
     plot!(s, 
           real(sim.X[1]),
