@@ -216,6 +216,8 @@ function get_tile(
   name::String="noname";
   tiles=100,
   plot_finals=false,
+  use_precomputed=false,
+  return_maximum=false
 )
   @assert false
   saveto = "../media/tiles_$(name).pdf"
