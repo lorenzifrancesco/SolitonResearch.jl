@@ -8,3 +8,4 @@ human_readable
 log*
 *.log
 diagnostic/*.csv
+Manifest.toml
