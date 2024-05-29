@@ -28,8 +28,8 @@ function plot_axial_heatmap(
   info=false,
   doifft=true,
   show=false,
-  title="",
-)
+  title="",)
+  print(size(u))
   @unpack t, X = sim
   x = Array(X[axis])
   @assert axis == 1
@@ -57,7 +57,7 @@ function plot_final_density!(
   color=:black,
   show=false,
   title=""
-)
+  )
   @unpack t, X = sim
   x = Array(X[1])
   tmp = u[end]
@@ -100,7 +100,7 @@ function plot_final_density!(
   @assert isapprox(ns(final, sim), 1.0, atol=1e-3)
   dydz = (X[2][2]-X[2][1])*(X[3][2]-X[3][1]) |> real
   final_axial = Array(sum(abs2.(final)*dydz, dims=ax_list))[:, 1, 1]
-  plot!(p,
+  Plots.plot!(p,
     real.(x),
     final_axial,
     label=label,
@@ -111,21 +111,21 @@ function plot_final_density!(
   return p
 end
 
-# function animation_final_density(u,sim::Sim{1, Array{ComplexF64}};file="1D_evolution.gif",framerate=30,info=false, doifft=true)
-#     @unpack t, X, Nt = sim; x = Array(X[1]) |> real
-#     # override until next solution 
-#     Nt = length(u)
-#     saveto=joinpath("media",file)
-#     tindex = Makie.Observable(1)
-#     iter = u
-#     doifft ? iter = [Array(xspace(u[k], sim)) for k in 1:Nt] : nothing
-#     #iter = [ for k in 1:Nt]
-#     iter = [abs2.(iter[k]) for k in 1:Nt]
-#     fig, ax= Makie.lines(x, Makie.@lift(iter[$tindex]))
+function animation_final_density(u,sim::Sim{1, Array{ComplexF64}};file="1D_evolution.gif",framerate=30,info=false, doifft=true)
+    @unpack t, X, Nt = sim; x = Array(X[1]) |> real
+    # override until next solution 
+    Nt = length(u)
+    saveto=joinpath("media",file)
+    tindex = Makie.Observable(1)
+    iter = u
+    doifft ? iter = [Array(xspace(u[k], sim)) for k in 1:Nt] : nothing
+    #iter = [ for k in 1:Nt]
+    iter = [abs2.(iter[k]) for k in 1:Nt]
+    fig, ax= Makie.lines(x, Makie.@lift(iter[$tindex]))
 
-#     Makie.limits!(ax, x[1], x[end], 0, 1)
-#     Makie.record(fig, saveto, 1:Nt; framerate=framerate) do i
-#         tindex[] = i
-#     end
-#     return fig
-# end
+    Makie.limits!(ax, x[1], x[end], 0, 1)
+    Makie.record(fig, saveto, 1:Nt; framerate=framerate) do i
+        tindex[] = i
+    end
+    return fig
+end

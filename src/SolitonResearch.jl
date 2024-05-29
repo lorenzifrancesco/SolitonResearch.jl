@@ -6,7 +6,7 @@ using PrecompileTools
 
 using SolitonDynamics
 import CUDA: CuArray
-using Plots
+using Plots, Makie
 import JLD2, CSV
 using Tables, DataFrames
 using Interpolations
